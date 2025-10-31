@@ -7,6 +7,7 @@ how Python powers the quiz backend.
 import asyncio
 import os
 import secrets
+from contextlib import asynccontextmanager
 from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
@@ -26,18 +27,29 @@ from scoring import calculate_score
 from storage import active_question_answers, answers, participants, rooms
 from validation import validate_answer
 
+
+# Lifespan event replacing @app.on_event()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Run on application startup."""
+    print("🚀 Quiz Backend starting up!")
+    print("📚 API Docs available at: http://localhost:8000/docs")
+    print("🐍 Python-powered real-time quiz platform ready!")
+    yield
+
+
 # Create FastAPI app
 app = FastAPI(
     title="Quiz Backend - Python Powered! 🐍",
     description="Real-time quiz platform backend using FastAPI and WebSockets",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 # CORS middleware - Configure allowed origins via CORS_ORIGINS environment variable
 # Format: comma-separated list like "http://localhost:4321,https://your-app.railway.app"
 cors_origins_str = os.getenv(
-    "CORS_ORIGINS",
-    "http://localhost:4321,http://localhost:3000,http://localhost"
+    "CORS_ORIGINS", "http://localhost:4321,http://localhost:3000,http://localhost"
 )
 cors_origins = [origin.strip() for origin in cors_origins_str.split(",")]
 
@@ -415,17 +427,6 @@ async def schedule_timeout_broadcast(
             "correct_answer": correct_answer,
         },
     )
-
-
-# === Startup Event ===
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Run on application startup."""
-    print("🚀 Quiz Backend starting up!")
-    print("📚 API Docs available at: http://localhost:8000/docs")
-    print("🐍 Python-powered real-time quiz platform ready!")
 
 
 if __name__ == "__main__":
