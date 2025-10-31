@@ -9,7 +9,7 @@ import expressiveCode from "astro-expressive-code";
 // https://astro.build/config
 export default defineConfig({
   integrations: [
-    alpinejs(),
+    alpinejs({ entrypoint: '/src/lib/alpine/alpineInit' }),
     expressiveCode({
       frames: {
         showCopyToClipboardButton: false,
