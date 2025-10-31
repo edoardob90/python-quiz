@@ -25,10 +25,10 @@ This is an interactive quiz application designed to close a 3-day Python tutoria
 - **uv** - Fast Python package manager
 
 ### Frontend
-- **Astro 4.x** - Static site generator
-- **React 18+** - Interactive components
+- **Astro 5.x** - SSR framework with Node.js adapter
+- **Alpine.js** - Lightweight reactive framework (via @astrojs/alpinejs)
 - **Tailwind CSS** - Styling
-- **TypeScript** - Type safety
+- **TypeScript** - Type safety for Alpine logic modules
 
 ## Project Structure
 
@@ -44,20 +44,32 @@ python-quiz/
 │   ├── pyproject.toml          # Python dependencies (uv)
 │   └── .env                    # Environment configuration
 │
-└── frontend/                   # Astro + React frontend
+└── frontend/                   # Astro + Alpine.js frontend
     ├── src/
     │   ├── content/
     │   │   ├── config.ts       # Content collection schema
-    │   │   └── quizzes/        # Quiz markdown files
+    │   │   └── test-quiz/      # Example quiz (one folder per quiz)
+    │   │       ├── question-1.md   # Each question is a separate file
+    │   │       ├── question-2.md   # Frontmatter: type, timeLimit, points, etc.
+    │   │       └── ...             # (10 questions total)
     │   ├── components/
-    │   │   ├── QuizHost.tsx    # Host controls
-    │   │   ├── QuizPlayer.tsx  # Participant UI
-    │   │   ├── Leaderboard.tsx # Real-time leaderboard
-    │   │   └── Timer.tsx       # Countdown timer
-    │   └── lib/
-    │       └── websocket.ts    # WebSocket client wrapper
-    ├── astro.config.mjs        # Astro configuration
-    └── .env                    # Frontend environment variables
+    │   │   ├── QuizHost.astro      # Host controls (Alpine markup)
+    │   │   ├── QuizPlayer.astro    # Participant UI (Alpine markup)
+    │   │   ├── Leaderboard.astro   # Real-time leaderboard (Alpine markup)
+    │   │   └── Timer.astro         # Countdown timer (Alpine markup)
+    │   ├── lib/
+    │   │   ├── alpine/
+    │   │   │   ├── quizHost.ts     # Alpine component logic
+    │   │   │   ├── quizPlayer.ts   # Alpine component logic
+    │   │   │   ├── leaderboard.ts  # Alpine component logic
+    │   │   │   └── timer.ts        # Alpine component logic
+    │   │   ├── alpineInit.ts       # Global Alpine initialization
+    │   │   └── websocket.ts        # WebSocket client wrapper
+    │   └── pages/
+    │       ├── index.astro         # Homepage
+    │       └── room/[roomId]/      # Dynamic room routes
+    ├── astro.config.mjs            # Astro + Alpine.js integration
+    └── .env                        # Frontend environment variables
 ```
 
 ## Setup Instructions
@@ -140,39 +152,51 @@ npm run dev
 
 ### Creating Your First Quiz
 
-1. Create a markdown file in `frontend/src/content/quizzes/`:
+Quizzes use Astro Content Collections with a specific structure:
+
+**Quiz Structure:**
+- One folder per quiz in `frontend/src/content/`
+- Each question is a separate `.md` file
+- Frontmatter is validated by schema in `config.ts`
+
+**Example: Creating "my-quiz"**
+
+1. Create folder: `frontend/src/content/my-quiz/`
+
+2. Create `question-1.md`:
 
 ```markdown
 ---
-title: "Python Basics Quiz"
-description: "Test your Python knowledge"
-difficulty: "easy"
+type: "multiple-choice"
+timeLimit: 30
+points: 1000
+correctAnswer: ["4"]
+options: ["3", "4", "5", "22"]
 ---
-
-## Question 1
-**Type:** multiple-choice
-**Time:** 30
-**Points:** 1000
 
 What is the output of `print(2 + 2)`?
+```
 
-- [ ] 3
-- [x] 4
-- [ ] 5
-- [ ] "22"
+3. Create `question-2.md`:
 
+```markdown
 ---
-
-## Question 2
-**Type:** short-answer
-**Time:** 45
-**Points:** 1500
-**Answers:** ["Python", "python"]
+type: "short-answer"
+timeLimit: 45
+points: 1500
+correctAnswer: ["Python", "python"]
+---
 
 What programming language are you learning?
 ```
 
-2. The quiz will be automatically available in your application!
+4. The quiz `my-quiz` will be automatically available at `/room/{roomId}/host?quiz=my-quiz`
+
+**Key Points:**
+- **One file per question** (not all questions in one file)
+- **Frontmatter structure** differs by question type
+- **Multiple-choice** needs `options` array
+- **Short-answer** can have multiple accepted answers for fuzzy matching
 
 ## Development Workflow
 
@@ -205,6 +229,54 @@ What programming language are you learning?
        └────────WebSocket───────┘
               (Real-time)
 ```
+
+### Alpine.js + Astro Integration
+
+The frontend uses a **separation of concerns** pattern:
+
+**Astro Components (`.astro` files):**
+- Server-side rendering (SSR) for initial HTML
+- Alpine.js directives embedded in markup (`x-data`, `x-show`, `x-if`, `x-on`)
+- Pass data from Astro → Alpine via template literals
+
+**Alpine Logic Modules (`src/lib/alpine/*.ts`):**
+- TypeScript functions that return Alpine component definitions
+- Contain reactive state, methods, and lifecycle hooks
+- Imported and called in Astro components via `x-data`
+
+**Example Pattern:**
+
+```astro
+<!-- Timer.astro (markup) -->
+<div x-data={timer(timeLimit, currentQuestionIndex, totalQuestions)}>
+  <span x-text="timeLeft"></span>
+  <button @click="startTimer()">Start</button>
+</div>
+
+<script>
+  import { timer } from '../lib/alpine/timer.ts';
+</script>
+```
+
+```typescript
+// timer.ts (logic)
+export function timer(limit: number, index: number, total: number) {
+  return {
+    timeLeft: limit,
+    isStarted: false,
+    startTimer() {
+      this.isStarted = true;
+      // countdown logic...
+    }
+  };
+}
+```
+
+**Benefits:**
+- Logic is testable TypeScript (type-safe)
+- Markup is readable Astro (SSR + Alpine directives)
+- No client-side JavaScript framework bundle
+- Alpine (~15KB) is the only JS shipped to browser
 
 ### Answer Submission Flow
 
