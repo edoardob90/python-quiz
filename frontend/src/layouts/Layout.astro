@@ -18,10 +18,7 @@ const { title = "Quiz Platform" } = Astro.props;
     </head>
     <body class="bg-linear-to-br from-blue-50 to-purple-50 min-h-screen">
         <slot />
-
         <!-- Alpine.js component registration -->
-        <script>
-            import '../lib/alpineInit';
-        </script>
+        <script src="../lib/alpineInit.ts"></script>
     </body>
 </html>
