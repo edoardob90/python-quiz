@@ -1,6 +1,6 @@
 # Quiz App - Real-Time Quiz Platform
 
-A real-time quiz platform built with **FastAPI** (Python backend) and **Astro + React** (frontend). Perfect for demonstrating Python's capabilities to students!
+A real-time quiz platform built with **FastAPI** (Python backend) and **Astro + Alpine.js** (frontend). Perfect for demonstrating Python's capabilities to students!
 
 ## Project Overview
 
