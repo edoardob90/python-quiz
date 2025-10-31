@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* Code blocks top/bottom margins */
+div.expressive-code {
+  @apply my-4;
+}

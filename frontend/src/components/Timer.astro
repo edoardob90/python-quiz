@@ -1,0 +1,65 @@
+---
+/**
+ * Timer Component (Alpine.js)
+ *
+ * Displays countdown timer for quiz questions with visual progress bar.
+ * Uses the registered 'timer' Alpine component from alpine/timer.ts
+ *
+ * Props:
+ * - timeLimit: Total time in seconds for the countdown
+ */
+
+interface Props {
+    timeLimit: number;
+    currentQuestionIndex?: number;
+    totalQuestions?: number;
+}
+
+const { timeLimit, currentQuestionIndex = 0, totalQuestions = 1 } = Astro.props;
+---
+
+<div
+    x-data={`timer({ timeLimit: ${timeLimit}, currentQuestionIndex: ${currentQuestionIndex}, totalQuestions: ${totalQuestions} })`}
+    x-init="init()"
+    class="mb-4 text-center"
+>
+    <!-- Timer Display -->
+    <div class="text-4xl font-bold">
+        <!-- Initial waiting before first question starts -->
+        <template x-if="!isStarted && !waitingForNext">
+            <span class="text-gray-500">⏳ Waiting...</span>
+        </template>
+
+        <!-- Active countdown -->
+        <template x-if="isStarted">
+            <span
+                x-text="timeLeft + 's'"
+                :class="isUrgent ? 'text-red-600' : 'text-gray-800'"
+            >
+            </span>
+        </template>
+
+        <!-- Waiting for next question (after timeout) -->
+        <template x-if="waitingForNext">
+            <template x-if="currentQuestionIndex < totalQuestions - 1">
+                <span class="text-blue-600">
+                    🎯 Get ready for question #<span
+                        x-text="currentQuestionIndex + 2"></span>
+                </span>
+            </template>
+            <template x-if="currentQuestionIndex >= totalQuestions - 1">
+                <span class="text-green-600"> ✨ Quiz completed! </span>
+            </template>
+        </template>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="w-full bg-gray-200 h-2 mt-2 rounded-full overflow-hidden">
+        <div
+            :style="`width: ${percentage}%`"
+            :class="isUrgent ? 'bg-red-600' : 'bg-blue-600'"
+            class="h-2 rounded-full transition-all duration-1000"
+        >
+        </div>
+    </div>
+</div>

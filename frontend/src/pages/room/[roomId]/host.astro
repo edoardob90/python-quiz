@@ -1,0 +1,281 @@
+---
+/**
+ * Host Page - Quiz Control Panel
+ *
+ * Room-based routing: /room/ABC123/host
+ * This page controls a specific quiz room session.
+ */
+
+import { getCollection, render } from "astro:content";
+import Layout from "../../../layouts/Layout.astro";
+import QuizHost from "../../../components/QuizHost.astro";
+import Leaderboard from "../../../components/Leaderboard.astro";
+
+// Get the room ID from the URL
+const { roomId } = Astro.params;
+
+if (!roomId) {
+    return Astro.redirect("/");
+}
+
+// Load questions from content collection
+// In a real app, you'd fetch quiz_id from backend first
+// For now, we assume all rooms use test-quiz
+const questions = await getCollection("testQuiz");
+const sortedQuestions = questions.sort((a, b) => a.id.localeCompare(b.id));
+
+// Convert questions metadata to JSON-serializable format for Alpine.js
+// We'll render the actual question content server-side in the template
+const questionsData = sortedQuestions.map((q, index) => ({
+    index,
+    type: q.data.type,
+    options: q.data.options || [],
+    timeLimit: q.data.timeLimit,
+    points: q.data.points,
+    correctAnswer: q.data.correctAnswer,
+}));
+
+// Host secret will be retrieved from sessionStorage via client-side script
+// (It was stored when the room was created)
+const hostSecretPlaceholder = "WILL_BE_LOADED_FROM_SESSION";
+---
+
+<Layout title="Host: Python Basics Test">
+    <div class="bg-gray-100 min-h-screen">
+        <!-- Missing Host Secret Warning -->
+        <div
+            id="no-secret-warning"
+            class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        >
+            <div class="bg-white rounded-lg shadow-xl p-8 max-w-md">
+                <div class="text-4xl mb-4 text-center">⚠️</div>
+                <h2 class="text-xl font-bold text-red-800 mb-2">
+                    Not Authorized
+                </h2>
+                <p class="text-gray-700 mb-4">
+                    You don't have permission to host this room. Only the person
+                    who created the room can host it.
+                </p>
+                <a
+                    href="/"
+                    class="block w-full py-2 bg-blue-600 text-white text-center rounded-lg hover:bg-blue-700"
+                >
+                    Go to Home
+                </a>
+            </div>
+        </div>
+
+        <div class="container mx-auto px-4 py-8">
+            <!-- Header -->
+            <header class="mb-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800">
+                            Python Basics Test
+                        </h1>
+                        <p class="text-gray-600">Host Control Panel</p>
+                    </div>
+                    <a
+                        href="/"
+                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                    >
+                        ← Back
+                    </a>
+                </div>
+            </header>
+
+            <!-- Room Info Alert -->
+            <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-2xl">🎮</span>
+                    <h2 class="text-lg font-semibold text-blue-900">
+                        Room Code: {roomId}
+                    </h2>
+                </div>
+                <p class="text-blue-700 text-sm">
+                    Share this code with participants so they can join at: <strong
+                        >{Astro.url.origin}/join</strong
+                    >
+                </p>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="grid lg:grid-cols-3 gap-6">
+                <!-- Left Column: Question Display + Host Controls -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Current Question Display (dynamically updated by Alpine) -->
+                    <div
+                        id="question-display"
+                        x-data={`{ currentQuestion: 0, totalQuestions: ${sortedQuestions.length} }`}
+                        class="bg-white rounded-lg shadow-lg p-6"
+                    >
+                        <h2 class="text-xl font-semibold mb-4">
+                            Current Question <span
+                                x-text="`(${currentQuestion + 1}/${totalQuestions})`"
+                                class="text-gray-500"></span>
+                        </h2>
+
+                        {
+                            sortedQuestions.length > 0 ? (
+                                sortedQuestions.map(async (question, index) => {
+                                    const { Content } = await render(question);
+                                    return (
+                                        <div
+                                            x-show={`currentQuestion === ${index}`}
+                                        >
+                                            <div class="text-lg mb-4">
+                                                <Content />
+                                            </div>
+
+                                            {question.data.type ===
+                                                "multiple-choice" && (
+                                                <div class="mt-3 space-y-2">
+                                                    <p class="text-sm font-semibold text-gray-700">
+                                                        Options:
+                                                    </p>
+                                                    <ul class="list-disc list-inside space-y-1">
+                                                        {question.data.options?.map(
+                                                            (option) => (
+                                                                <li class="text-gray-600">
+                                                                    {option}
+                                                                </li>
+                                                            ),
+                                                        )}
+                                                    </ul>
+                                                </div>
+                                            )}
+
+                                            <div class="mt-4 text-sm text-gray-600">
+                                                <span>
+                                                    Type: {question.data.type}
+                                                </span>{" "}
+                                                |
+                                                <span>
+                                                    {" "}
+                                                    Time:{" "}
+                                                    {
+                                                        question.data.timeLimit
+                                                    }{" "}
+                                                    seconds
+                                                </span>{" "}
+                                                |
+                                                <span>
+                                                    {" "}
+                                                    Points:{" "}
+                                                    {question.data.points}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            ) : (
+                                <div class="text-gray-500">
+                                    There are no questions to display.
+                                </div>
+                            )
+                        }
+                    </div>
+
+                    <!-- Host Controls -->
+                    <div id="host-controls-container">
+                        <QuizHost
+                            roomId={roomId}
+                            totalQuestions={questionsData.length}
+                            questionsData={questionsData}
+                        />
+                    </div>
+                </div>
+
+                <!-- Right Column: Leaderboard -->
+                <div class="space-y-4">
+                    <!-- Open Leaderboard Button -->
+                    <a
+                        href={`/leaderboard/${roomId}`}
+                        target="_blank"
+                        class="block w-full py-3 bg-purple-600 text-white text-center rounded-lg hover:bg-purple-700 transition font-semibold shadow-md"
+                    >
+                        🏆 Open Leaderboard in New Tab
+                    </a>
+
+                    <!-- Embedded Leaderboard -->
+                    <Leaderboard roomId={roomId} />
+                </div>
+            </div>
+
+            <!-- Debug Info -->
+            <div class="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <details>
+                    <summary
+                        class="cursor-pointer font-semibold text-gray-700 mb-2"
+                    >
+                        🔧 Debug Info
+                    </summary>
+                    <div class="text-sm text-gray-600 space-y-2">
+                        <p><strong>Room ID:</strong> {roomId}</p>
+                        <p>
+                            <strong>Questions loaded:</strong>
+                            {questionsData.length}
+                        </p>
+                        <p>
+                            <strong>Host Secret:</strong>
+                            <span id="debug-host-secret">Loading...</span>
+                        </p>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </div>
+</Layout>
+
+<script is:inline define:vars={{ roomId }}>
+    // Check for host secret in sessionStorage
+    const hostSecret = sessionStorage.getItem(`host_secret_${roomId}`);
+
+    if (!hostSecret) {
+        // Show warning if no host secret found
+        console.error("No host secret found for this room");
+        document.getElementById("no-secret-warning").classList.remove("hidden");
+    } else {
+        // Update debug info
+        document.getElementById("debug-host-secret").textContent =
+            hostSecret.substring(0, 10) + "...";
+
+        // Inject hostSecret into the QuizHost component via data attribute
+        const hostControlsContainer = document.getElementById(
+            "host-controls-container",
+        );
+        const quizHostElement =
+            hostControlsContainer.querySelector("[data-host-secret]");
+
+        if (quizHostElement) {
+            quizHostElement.setAttribute("data-host-secret", hostSecret);
+        }
+
+        // Sync currentQuestion between QuizHost and question display
+        document.addEventListener("alpine:initialized", () => {
+            const questionDisplay = document.getElementById("question-display");
+
+            // Watch for currentQuestion changes in the QuizHost component
+            const watchInterval = setInterval(() => {
+                const quizHostData =
+                    quizHostElement && Alpine.$data(quizHostElement);
+                const displayData = Alpine.$data(questionDisplay);
+
+                if (quizHostData && displayData) {
+                    if (
+                        displayData.currentQuestion !==
+                        quizHostData.currentQuestion
+                    ) {
+                        displayData.currentQuestion =
+                            quizHostData.currentQuestion;
+                    }
+                }
+            }, 100);
+
+            // Clean up on page unload
+            window.addEventListener("beforeunload", () =>
+                clearInterval(watchInterval),
+            );
+        });
+    }
+</script>

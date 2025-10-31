@@ -1,0 +1,114 @@
+---
+/**
+ * Component Playground
+ *
+ * Simple page to test individual components while developing.
+ * Useful for visual testing without running the full backend.
+ */
+
+import Layout from '../layouts/Layout.astro';
+import Timer from '../components/Timer.astro';
+
+// Mock data for testing
+const mockQuestion = {
+  index: 0,
+  type: 'multiple-choice' as const,
+  text: 'What is the output of print(2 + 2)?',
+  options: ['3', '4', '5', '"22"'],
+  time_limit: 20,
+  points: 1000,
+  correct_answer: ['4']
+};
+---
+
+<Layout title="Component Playground">
+  <div class="container mx-auto px-4 py-8 space-y-8">
+    <header class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-gray-800 mb-2">🎨 Component Playground</h1>
+      <p class="text-gray-600">Test components in isolation</p>
+      <a href="/" class="text-blue-600 hover:underline text-sm">← Back to home</a>
+    </header>
+
+    <!-- Timer Component Test -->
+    <section class="bg-white rounded-lg shadow-lg p-6">
+      <h2 class="text-2xl font-bold mb-4">Timer Component</h2>
+      <p class="text-gray-600 mb-4">
+        Testing countdown timer with 30 second limit
+      </p>
+      <div class="max-w-md mx-auto">
+        <Timer timeLimit={30} onTimeout="console.log('Timer expired!')" />
+      </div>
+      <div class="mt-4 p-4 bg-gray-50 rounded text-sm">
+        <strong>Expected behavior:</strong>
+        <ul class="list-disc list-inside mt-2">
+          <li>Countdown from 30 to 0</li>
+          <li>Red color and red progress bar at ≤10s</li>
+          <li>Progress bar depletes smoothly</li>
+          <li>Console log when timer reaches 0</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Component Status -->
+    <section class="bg-blue-50 rounded-lg p-6">
+      <h3 class="text-xl font-semibold mb-3">✅ Frontend Status</h3>
+      <div class="space-y-2">
+        <div class="flex items-center gap-2">
+          <span class="text-green-600">✓</span>
+          <span>Timer.astro - Complete</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-green-600">✓</span>
+          <span>QuizHost.astro - Complete</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-green-600">✓</span>
+          <span>QuizPlayer.astro - Complete</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-green-600">✓</span>
+          <span>Leaderboard.astro - Complete</span>
+        </div>
+      </div>
+      <p class="mt-4 text-sm text-gray-700">
+        All frontend components are implemented! The other components require a running backend to test fully.
+      </p>
+    </section>
+
+    <!-- Next Steps -->
+    <section class="bg-purple-50 rounded-lg p-6">
+      <h3 class="text-xl font-semibold mb-3">📋 Next Steps</h3>
+      <ol class="list-decimal list-inside space-y-2 text-gray-700">
+        <li>Complete the Python backend TODOs (scoring.py, validation.py, game_state.py)</li>
+        <li>Run the backend: <code class="bg-white px-2 py-1 rounded">cd backend && uv run uvicorn main:app --reload</code></li>
+        <li>Run the frontend: <code class="bg-white px-2 py-1 rounded">cd frontend && npm run dev</code></li>
+        <li>Visit <code class="bg-white px-2 py-1 rounded">localhost:4321</code> to test the full quiz flow</li>
+      </ol>
+    </section>
+
+    <!-- Alpine.js DevTools Tips -->
+    <section class="bg-gray-800 text-white rounded-lg p-6">
+      <h3 class="text-xl font-semibold mb-3">🔍 Debugging Tips</h3>
+      <div class="space-y-2 font-mono text-sm">
+        <div><span class="text-green-400">Browser Console Commands:</span></div>
+        <div class="ml-4">
+          <div><span class="text-yellow-300">$data</span> - View component state</div>
+          <div><span class="text-yellow-300">$el</span> - Get component element</div>
+          <div><span class="text-yellow-300">$watch('property', val => console.log(val))</span> - Watch changes</div>
+        </div>
+        <div class="mt-4">
+          <span class="text-green-400">Install Alpine DevTools:</span><br>
+          <a href="https://alpinejs.dev/devtools" class="text-blue-400 hover:underline ml-4">
+            https://alpinejs.dev/devtools
+          </a>
+        </div>
+      </div>
+    </section>
+  </div>
+</Layout>
+
+<style>
+  code {
+    font-family: 'Courier New', monospace;
+  }
+</style>

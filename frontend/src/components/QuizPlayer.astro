@@ -1,0 +1,201 @@
+---
+/**
+ * Quiz Player Component (Alpine.js)
+ *
+ * Unified player view showing question content and answer controls.
+ * Uses the registered 'quizPlayer' Alpine component from alpine/quizPlayer.ts
+ */
+
+import { render } from "astro:content";
+
+interface Props {
+    roomId: string;
+    sortedQuestions: any[];
+    questionsData: any[];
+}
+
+const { roomId, sortedQuestions, questionsData } = Astro.props;
+---
+
+<div
+    x-data={`quizPlayer({ roomId: '${roomId}', questions: ${JSON.stringify(questionsData)} })`}
+    x-init="init()"
+    data-participant-id=""
+    class="space-y-6"
+>
+    <!-- Waiting for Host Overlay -->
+    <div
+        x-show="waitingForHost"
+        class="bg-white rounded-lg shadow-lg p-12 text-center"
+    >
+        <div class="text-6xl mb-4">⏳</div>
+        <h3 class="text-2xl font-bold text-gray-800 mb-2">Waiting for Host</h3>
+        <p class="text-gray-600">
+            The host will start the question when everyone is ready.
+        </p>
+    </div>
+
+    <!-- Active Question Display -->
+    <div x-show="!waitingForHost" class="space-y-6">
+        <!-- Question Content -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">
+                Question <span
+                    x-text="`${currentQuestionIndex + 1}/${questions.length}`"
+                    class="text-gray-500"></span>
+            </h2>
+
+            {
+                sortedQuestions.length > 0 ? (
+                    sortedQuestions.map(async (question, index) => {
+                        const { Content } = await render(question);
+                        return (
+                            <div x-show={`currentQuestionIndex === ${index}`}>
+                                <div class="text-lg mb-4">
+                                    <Content />
+                                </div>
+
+                                {question.data.type === "multiple-choice" && (
+                                    <div class="mt-3 space-y-2">
+                                        <p class="text-sm font-semibold text-gray-700">
+                                            Options:
+                                        </p>
+                                        <ul class="list-disc list-inside space-y-1">
+                                            {question.data.options?.map(
+                                                (option) => (
+                                                    <li class="text-gray-600">
+                                                        {option}
+                                                    </li>
+                                                ),
+                                            )}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                <div class="mt-4 text-sm text-gray-600">
+                                    <span>Type: {question.data.type}</span> |
+                                    <span>
+                                        {" "}
+                                        Time: {question.data.timeLimit}s
+                                    </span>{" "}
+                                    |
+                                    <span> Points: {question.data.points}</span>
+                                </div>
+                            </div>
+                        );
+                    })
+                ) : (
+                    <div class="text-gray-500">
+                        There are no questions to display.
+                    </div>
+                )
+            }
+        </div>
+
+        <!-- Answer Submission Panel -->
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <!-- Multiple Choice Options -->
+            <template x-if="isMultipleChoice">
+                <div class="space-y-3">
+                    <template
+                        x-for="(option, idx) in currentQuestion?.options"
+                        :key="idx"
+                    >
+                        <button
+                            @click="selectedAnswer = option"
+                            :disabled="hasAnswered"
+                            :class="{
+              'border-purple-600 bg-purple-50': selectedAnswer === option && !hasTimedOut,
+              'border-green-500 bg-green-50 ring-2 ring-green-300': hasTimedOut && correctAnswer.includes(option),
+              'border-red-500 bg-red-50': hasTimedOut && selectedAnswer === option && !correctAnswer.includes(option),
+              'border-gray-200 hover:border-gray-300': selectedAnswer !== option && !hasTimedOut,
+              'opacity-60 cursor-not-allowed': hasAnswered,
+              'cursor-pointer': !hasAnswered
+            }"
+                            class="w-full p-4 text-left rounded-lg border-2 transition relative"
+                        >
+                            <span x-text="option"></span>
+                            <span
+                                x-show="hasTimedOut && correctAnswer.includes(option)"
+                                class="absolute right-4 top-1/2 transform -translate-y-1/2 text-green-600 font-bold text-xl"
+                            >
+                                ✓
+                            </span>
+                        </button>
+                    </template>
+                </div>
+            </template>
+
+            <!-- Short Answer Input -->
+            <template x-if="isShortAnswer">
+                <input
+                    type="text"
+                    x-model="selectedAnswer"
+                    :disabled="hasAnswered"
+                    class="w-full p-4 border-2 border-gray-200 rounded-lg focus:border-purple-600 focus:outline-none disabled:opacity-60"
+                    placeholder="Type your answer..."
+                />
+            </template>
+
+            <!-- Submit Button: active state -->
+            <button
+                x-show="!hasAnswered"
+                @click="handleSubmit(false)"
+                :disabled="!canSubmit"
+                class="w-full mt-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+                Submit Answer
+            </button>
+
+            <!-- Submit Button: waiting for timeout -->
+            <button
+                x-show="hasAnswered && !result"
+                disabled
+                class="w-full mt-6 py-3 bg-gray-400 text-white rounded-lg font-semibold cursor-not-allowed"
+            >
+                Answer submitted • <span x-text="timeLeft"></span> seconds remaining
+            </button>
+
+            <!-- Result Feedback -->
+            <template x-if="result">
+                <div
+                    :class="result.is_correct ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                    class="mt-6 p-4 rounded-lg"
+                >
+                    <div
+                        class="font-bold"
+                        x-text="result.is_correct ? '✓ Correct!' : '✗ Incorrect'"
+                    >
+                    </div>
+                    <div class="text-sm mt-1">
+                        <span>+</span><span x-text="result.points_earned"
+                        ></span>
+                        <span> points • Total: </span><span
+                            x-text="result.current_score"></span>
+                        <template x-if="result.streak > 0">
+                            <span>
+                                • 🔥 <span x-text="result.streak"></span> streak</span
+                            >
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Correct Answer Display (Short Answer after timeout) -->
+            <template
+                x-if="hasTimedOut && isShortAnswer && correctAnswer.length > 0"
+            >
+                <div
+                    class="mt-6 p-4 rounded-lg bg-blue-100 text-blue-800 border-2 border-blue-300"
+                >
+                    <div class="font-semibold mb-1">✓ Correct Answer:</div>
+                    <div class="text-lg">
+                        <span x-text="correctAnswer.join(' or ')"></span>
+                    </div>
+                </div>
+            </template>
+        </div>
+        <!-- End Answer Submission Panel -->
+    </div>
+    <!-- End Active Question Display -->
+</div>

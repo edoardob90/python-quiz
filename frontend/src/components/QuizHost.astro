@@ -1,0 +1,113 @@
+---
+/**
+ * Quiz Host Component (Alpine.js)
+ *
+ * Host control panel for managing quiz flow.
+ * Uses the registered 'quizHost' Alpine component from alpine/quizHost.ts
+ *
+ * Note: hostSecret should be set via data-host-secret attribute,
+ * typically from sessionStorage on the page level.
+ */
+
+interface QuestionData {
+    index: number;
+    type: string;
+    options: string[];
+    timeLimit: number;
+    points: number;
+    correctAnswer: string[];
+}
+
+interface Props {
+    roomId: string;
+    totalQuestions: number;
+    questionsData: QuestionData[];
+}
+
+const { roomId, totalQuestions, questionsData } = Astro.props;
+---
+
+<div
+    x-data={`quizHost({ roomId: '${roomId}', totalQuestions: ${totalQuestions}, questionsData: ${JSON.stringify(questionsData)} })`}
+    x-init="init()"
+    data-host-secret=""
+    class="rounded-lg bg-white shadow-lg p-6"
+>
+    <h2 class="text-2xl font-bold mb-4">Host Controls</h2>
+
+    <div class="mb-6 p-4 bg-gray-100 rounded">
+        <div class="font-semibold">
+            Room Code: <span x-text="roomId"></span>
+        </div>
+        <div class="text-sm text-gray-600">
+            Participants: <span x-text="participantCount"></span>
+        </div>
+        <div class="text-sm text-gray-600">
+            Question: <span x-text="currentQuestion + 1"></span> / <span
+                x-text="totalQuestions"></span>
+        </div>
+    </div>
+
+    <div class="space-y-3">
+        <!-- Start question button (idle) -->
+        <button
+            x-show="questionStatus === 'idle'"
+            @click="startQuestion(questionsData[currentQuestion].timeLimit || 10)"
+            class="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
+        >
+            Start Question
+        </button>
+
+        <!-- Question is active (countdown running) -->
+        <div
+            x-show="questionStatus === 'active'"
+            class="p-3 bg-green-100 text-green-800 rounded text-center font-semibold"
+        >
+            Question Active
+        </div>
+
+        <!-- Question's timer is expired -->
+        <div
+            x-show="questionStatus === 'over'"
+            class="p-3 bg-blue-100 text-blue-800 rounded text-center font-semibold"
+        >
+            ✅ Question is over
+        </div>
+
+        <button
+            x-show="currentQuestion < totalQuestions - 1"
+            @click="nextQuestion()"
+            class="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+        >
+            Next Question
+        </button>
+
+        <div
+            x-show="isFinalQuestion && questionStatus === 'active'"
+            class="p-3 bg-yellow-100 text-yellow-800 rounded text-center font-semibold"
+        >
+            Final Question
+        </div>
+    </div>
+
+    <div class="mt-6">
+        <h3 class="font-semibold mb-2">
+            Participants (<span x-text="participantCount"></span>)
+        </h3>
+        <div class="max-h-40 overflow-y-auto">
+            <template x-if="participants.length === 0">
+                <p class="text-gray-500 text-sm">
+                    Waiting for participants to join...
+                </p>
+            </template>
+
+            <div x-show="participants.length > 0" class="space-y-1">
+                <template x-for="(id, idx) in participants" :key="id">
+                    <div class="text-sm bg-gray-50 p-2 rounded">
+                        Participant <span x-text="idx + 1"></span>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</div>
