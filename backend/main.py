@@ -253,9 +253,6 @@ async def submit_answer(room_id: str, request: SubmitAnswerRequest):
     if participant_id not in participants:
         raise HTTPException(status_code=404, detail="Participant not found")
 
-    # FIXME: needed?
-    # room = rooms[room_id]
-
     participant = participants[participant_id]
 
     # Validate answer

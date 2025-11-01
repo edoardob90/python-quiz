@@ -6,7 +6,10 @@ from models import QuestionType
 
 
 def validate_answer(
-    user_answer: str, correct_answers: list[str], question_type: QuestionType
+    user_answer: str,
+    correct_answers: list[str],
+    question_type: QuestionType,
+    ratio_threshold: float = 80.0,
 ) -> bool:
     """
     Validate user answer against correct answer(s).
@@ -27,7 +30,7 @@ def validate_answer(
         True
 
         >>> validate_answer("Pari", ["Paris"], "short-answer")
-        True  # 85% similarity due to fuzzy matching
+        True  # 80% similarity due to fuzzy matching
 
         >>> validate_answer("Option A", ["Option A"], "multiple-choice")
         True
@@ -38,7 +41,7 @@ def validate_answer(
                 similarity = fuzz.ratio(
                     user_answer, correct, processor=lambda s: s.strip().lower()
                 )
-                if similarity >= 85:
+                if similarity >= ratio_threshold:
                     return True
             return False
 
