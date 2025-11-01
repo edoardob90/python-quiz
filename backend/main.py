@@ -13,7 +13,6 @@ from datetime import datetime
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
-from game_state import advance_to_next_question, start_question_timer
 from models import (
     Answer,
     JoinRoomRequest,
@@ -172,14 +171,14 @@ async def start_question(room_id: str, request: StartQuestionRequest):
     active_question_answers[room_id] = request.correct_answer
 
     # Start the timer
-    _ = start_question_timer(room, time_limit)
+    room.start_question_timer(time_limit)
 
     # This task will run independently and broadcast the correct answer when time expires
     _ = asyncio.create_task(
         schedule_timeout_broadcast(
             room_id,
             time_limit,
-            request.question_index,  # or use request.question_index
+            request.question_index,
             request.correct_answer,
         )
     )
@@ -219,13 +218,15 @@ async def next_question(room_id: str, request: NextQuestionRequest):
     if room_id in active_question_answers:
         del active_question_answers[room_id]
 
-    advance_to_next_question(room)
-
-    await broadcast_to_room(
-        room_id, {"type": "question_changed", "question_index": room.current_question}
-    )
-
-    return {"current_question": room.current_question}
+    if room.advance_question():
+        await broadcast_to_room(
+            room_id,
+            {"type": "question_changed", "question_index": room.current_question},
+        )
+        return {"status": "advanced", "current_question": room.current_question}
+    else:
+        await broadcast_to_room(room_id, {"type": "quiz_complete"})
+        return {"status": "complete", "current_question": room.current_question}
 
 
 @app.post("/api/rooms/{room_id}/answer")

@@ -1,6 +1,6 @@
 """Pydantic data models for the quiz application."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 
 from pydantic import BaseModel
@@ -28,12 +28,63 @@ class Room(BaseModel):
     id: str  # Room code like "GAME1234"
     quiz_id: str  # Quiz identifier from markdown filename
     host_secret: str  # Authentication token for host
+    total_questions: int = 0
     current_question: int = 0
     status: RoomStatus = RoomStatus.WAITING  # waiting | active | paused | finished
     question_started_at: datetime | None = None
     question_ends_at: datetime | None = None
     participant_ids: list[str] = []
     created_at: datetime = datetime.now()
+
+    def is_complete(self) -> bool:
+        """Check if quiz is complete"""
+        return self.current_question >= self.total_questions
+
+    def advance_question(self) -> bool:
+        """
+        Move to the next question in the quiz.
+
+        Returns:
+            True if advanced successfully, False if quiz is already complete
+        """
+        if self.is_complete():
+            return False
+
+        self.current_question += 1
+        self.question_started_at = None
+        self.question_ends_at = None
+        self.status = RoomStatus.WAITING
+
+        return True
+
+    def start_question_timer(self, time_limit: int) -> None:
+        """
+        Start the timer for the current question.
+
+        Args:
+            time_limit: Question time limit in seconds
+
+        Returns:
+            None
+        """
+        now = datetime.now()
+        self.question_started_at = now
+        self.question_ends_at = now + timedelta(seconds=time_limit)
+        self.status = RoomStatus.ACTIVE
+
+    def finish_quiz(self) -> None:
+        """
+        Mark the quiz as finished.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+        self.status = RoomStatus.FINISHED
+        self.question_started_at = None
+        self.question_ends_at = None
 
 
 class Participant(BaseModel):
