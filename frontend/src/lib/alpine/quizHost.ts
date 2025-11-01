@@ -29,7 +29,7 @@ export function quizHost({
     totalQuestions,
     currentQuestion: 0,
     participants: [] as string[],
-    questionStatus: "idle" as "idle" | "active" | "over",
+    questionStatus: "idle" as "idle" | "active" | "over" | "complete",
     ws: null as QuizWebSocket | null,
     questionsData,
     $el: null as any, // Alpine.js magic property
@@ -137,9 +137,14 @@ export function quizHost({
         if (!response.ok) throw new Error("Failed to advance question");
 
         const data = await response.json();
-        this.currentQuestion = data.current_question || 0;
-        this.questionStatus = "idle";
-        console.log("Advanced to question", this.currentQuestion);
+        if (data.status === "complete") {
+          this.questionStatus = "complete";
+          console.log("Quiz complete!");
+        } else {
+          this.currentQuestion = data.current_question || 0;
+          this.questionStatus = "idle";
+          console.log("Advanced to question", this.currentQuestion);
+        }
       } catch (error) {
         console.error("Error advancing question:", error);
         alert("Failed to advance question. Check console for details.");
