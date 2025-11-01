@@ -1,0 +1,148 @@
+# Taskfile for Python Quiz Platform
+# Install: https://taskfile.dev/installation/
+# Usage: task [command]
+
+version: '3'
+
+tasks:
+  # Default task (shows available commands)
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  # Installation tasks
+  install:
+    desc: Install all dependencies (backend + frontend)
+    cmds:
+      - task: install-backend
+      - task: install-frontend
+
+  install-backend:
+    desc: Install backend dependencies with uv
+    dir: backend
+    cmds:
+      - uv sync
+    sources:
+      - pyproject.toml
+      - uv.lock
+
+  install-frontend:
+    desc: Install frontend dependencies with npm
+    dir: frontend
+    cmds:
+      - npm install
+    sources:
+      - package.json
+      - package-lock.json
+
+  # Development servers
+  dev:
+    desc: Start both backend and frontend in parallel
+    deps:
+      - backend
+      - frontend
+
+  backend:
+    desc: Start backend server with hot reload (port 8000)
+    dir: backend
+    cmds:
+      - uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
+  frontend:
+    desc: Start frontend dev server (port 4321)
+    dir: frontend
+    cmds:
+      - npm run dev
+
+  # Build tasks
+  build:
+    desc: Build frontend for production
+    dir: frontend
+    cmds:
+      - npm run build
+
+  build-check:
+    desc: Type-check frontend without building
+    dir: frontend
+    cmds:
+      - npm run check
+
+  # Testing tasks (placeholders for future)
+  test:
+    desc: Run all tests
+    cmds:
+      - echo "Tests not yet implemented"
+      # - task: test-backend
+      # - task: test-frontend
+
+  test-backend:
+    desc: Run backend tests with pytest
+    dir: backend
+    cmds:
+      - echo "Backend tests not yet implemented"
+      # - uv run pytest
+
+  test-frontend:
+    desc: Run frontend tests
+    dir: frontend
+    cmds:
+      - echo "Frontend tests not yet implemented"
+      # - npm test
+
+  # Cleanup tasks
+  clean:
+    desc: Clean all build artifacts and caches
+    cmds:
+      - task: clean-backend
+      - task: clean-frontend
+
+  clean-backend:
+    desc: Clean backend artifacts (__pycache__, .venv, etc.)
+    dir: backend
+    cmds:
+      - rm -rf __pycache__ .pytest_cache .venv
+      - find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+      - find . -type f -name "*.pyc" -delete 2>/dev/null || true
+
+  clean-frontend:
+    desc: Clean frontend artifacts (node_modules, dist, .astro)
+    dir: frontend
+    cmds:
+      - rm -rf node_modules dist .astro
+
+  # Deployment
+  deploy:
+    desc: Deploy to Railway (git push triggers auto-deploy)
+    cmds:
+      - git status
+      - echo "Pushing to Railway..."
+      - git push
+
+  # Utility tasks
+  api-docs:
+    desc: Open FastAPI interactive docs
+    cmds:
+      - open http://localhost:8000/docs || xdg-open http://localhost:8000/docs
+
+  frontend-url:
+    desc: Open frontend in browser
+    cmds:
+      - open http://localhost:4321 || xdg-open http://localhost:4321
+
+  logs-backend:
+    desc: Show backend logs (if using Railway CLI)
+    cmds:
+      - railway logs --service backend
+
+  logs-frontend:
+    desc: Show frontend logs (if using Railway CLI)
+    cmds:
+      - railway logs --service frontend
+
+  # Quick start
+  start:
+    desc: Install dependencies and start dev servers
+    cmds:
+      - task: install
+      - task: dev
