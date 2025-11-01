@@ -24,5 +24,3 @@ export default (Alpine: Alpine) => {
     "quizPlayer",
   ]);
 };
-
-// Hello world!
