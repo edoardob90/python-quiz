@@ -21,6 +21,8 @@ const { timeLimit, currentQuestionIndex = 0, totalQuestions = 1 } = Astro.props;
 <div
     x-data={`timer({ timeLimit: ${timeLimit}, currentQuestionIndex: ${currentQuestionIndex}, totalQuestions: ${totalQuestions} })`}
     x-init="init()"
+    x-show="!quizComplete && (isStarted || waitingForNext)"
+    x-cloak
     class="mb-4 text-center"
 >
     <!-- Timer Display -->
@@ -41,15 +43,10 @@ const { timeLimit, currentQuestionIndex = 0, totalQuestions = 1 } = Astro.props;
 
         <!-- Waiting for next question (after timeout) -->
         <template x-if="waitingForNext">
-            <template x-if="currentQuestionIndex < totalQuestions - 1">
-                <span class="text-blue-600">
-                    🎯 Get ready for question #<span
-                        x-text="currentQuestionIndex + 2"></span>
-                </span>
-            </template>
-            <template x-if="currentQuestionIndex >= totalQuestions - 1">
-                <span class="text-green-600"> ✨ Quiz completed! </span>
-            </template>
+            <span class="text-blue-600">
+                🎯 Get ready for question #<span
+                    x-text="currentQuestionIndex + 2"></span>
+            </span>
         </template>
     </div>
 

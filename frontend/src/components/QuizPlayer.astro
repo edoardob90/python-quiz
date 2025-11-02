@@ -24,7 +24,7 @@ const { roomId, sortedQuestions, questionsData } = Astro.props;
     class="space-y-6"
 >
     <!-- Active Question Display -->
-    <div x-show="!waitingForHost" class="space-y-6">
+    <div x-show="!waitingForHost && !quizComplete" class="space-y-6">
         <!-- Question Content -->
         <div class="bg-white rounded-lg shadow-lg p-6">
             <h2 class="text-xl font-semibold mb-4">
@@ -159,4 +159,32 @@ const { roomId, sortedQuestions, questionsData } = Astro.props;
         <!-- End Answer Submission Panel -->
     </div>
     <!-- End Active Question Display -->
+
+    <!-- Waiting for host (initial state) -->
+    <div x-show="waitingForHost && !quizComplete" x-cloak class="text-center space-y-6">
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <div class="text-6xl mb-4">⏳</div>
+            <h2 class="text-3xl font-bold mb-4">Waiting for Host</h2>
+            <p class="text-xl text-gray-600">
+                The host will start the quiz shortly. Get ready!
+            </p>
+        </div>
+    </div>
+
+    <!-- Quiz complete view -->
+    <div x-show="quizComplete" x-cloak x-transition class="text-center space-y-6">
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <h2 class="text-4xl font-bold mb-4">🎉 Quiz Complete!</h2>
+            <p class="text-xl text-gray-600 mb-6">
+                Great job! You completed all the
+                <span x-text="questions.length"></span> questions.
+            </p>
+            <a
+                href={`/leaderboard/${roomId}`}
+                class="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition"
+            >
+                View Final Leaderboard
+            </a>
+        </div>
+    </div>
 </div>

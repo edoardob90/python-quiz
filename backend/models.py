@@ -45,12 +45,14 @@ class Room(BaseModel):
         Move to the next question in the quiz.
 
         Returns:
-            True if advanced successfully, False if quiz is already complete
+            True if advanced to next question, False if quiz is now complete
         """
+        self.current_question += 1
+
         if self.is_complete():
+            self.finish_quiz()
             return False
 
-        self.current_question += 1
         self.question_started_at = None
         self.question_ends_at = None
         self.status = RoomStatus.WAITING

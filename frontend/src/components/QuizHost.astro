@@ -43,7 +43,7 @@ const { roomId, totalQuestions, questionsData } = Astro.props;
             Participants: <span x-text="participantCount"></span>
         </div>
         <div class="text-sm text-gray-600">
-            Question: <span x-text="currentQuestion + 1"></span> / <span
+            Question: <span x-text="Math.min(currentQuestion + 1, totalQuestions)"></span> / <span
                 x-text="totalQuestions"></span>
         </div>
     </div>
@@ -74,12 +74,39 @@ const { roomId, totalQuestions, questionsData } = Astro.props;
             ✅ Question is over
         </div>
 
+        <!-- Quiz is complete -->
+        <div
+            x-show="questionStatus === 'complete'"
+            class="p-4 bg-green-100 text-green-800 rounded text-center font-semibold border-2 border-green-400"
+        >
+            🎉 Quiz Complete!
+            <div class="text-sm font-normal mt-2">
+                All questions have been presented. Check the leaderboard for
+                final results.
+            </div>
+        </div>
+
+        <!-- Next Question button (not on final question) -->
         <button
-            x-show="currentQuestion < totalQuestions - 1"
+            x-show="currentQuestion < totalQuestions - 1 && questionStatus !== 'complete'"
             @click="nextQuestion()"
-            class="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+            :disabled="questionStatus !== 'over'"
+            class="w-full py-3 rounded-lg font-semibold transition"
+            :class="{
+                'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer': questionStatus === 'over',
+                'bg-gray-300 text-gray-500 cursor-not-allowed': questionStatus !== 'over'
+            }"
         >
             Next Question
+        </button>
+
+        <!-- Finish Quiz button (on final question) -->
+        <button
+            x-show="currentQuestion === totalQuestions - 1 && questionStatus === 'over'"
+            @click="nextQuestion()"
+            class="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition"
+        >
+            🏁 Finish Quiz
         </button>
 
         <div

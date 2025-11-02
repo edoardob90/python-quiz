@@ -36,6 +36,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
     selectedAnswer: "",
     hasAnswered: false,
     waitingForHost: true,
+    quizComplete: false,
     result: null as AnswerResult | null,
     pendingResult: null as AnswerResult | null,
     startTime: Date.now(),
@@ -128,6 +129,14 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
             this.result = this.pendingResult;
           }
         });
+
+        // Listen for the quiz complete event
+        this.ws.on("quiz_complete", () => {
+          console.log("Quiz complete!");
+          this.quizComplete = true;
+          this.waitingForHost = false;
+          window.dispatchEvent(new CustomEvent("quiz-complete"));
+        });
       }
 
       // Listen for timer timeout
@@ -140,6 +149,14 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
       // Listen for timer updates
       window.addEventListener("timer-update", (e: any) => {
         this.timeLeft = e.detail.timeLeft;
+      });
+
+      // DEBUG
+      console.log("QuizPlayer initialized:", {
+        waitingForHost: this.waitingForHost,
+        quizComplete: this.quizComplete,
+        currentQuestionIndex: this.currentQuestionIndex,
+        totalQuestions: this.questions.length,
       });
     },
 

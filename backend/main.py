@@ -78,12 +78,13 @@ async def root():
 
 
 @app.post("/api/rooms/create")
-async def create_room(quiz_id: str):
+async def create_room(quiz_id: str, total_questions: int):
     """
     Create a new quiz room.
 
     Args:
         quiz_id: Identifier for the quiz (e.g., "javascript-basics")
+        total_questions: Total number of questions in the quiz
 
     Returns:
         room_id: Generated room code
@@ -94,7 +95,11 @@ async def create_room(quiz_id: str):
     host_secret = secrets.token_urlsafe(16)
 
     room = Room(
-        id=room_id, quiz_id=quiz_id, host_secret=host_secret, created_at=datetime.now()
+        id=room_id,
+        quiz_id=quiz_id,
+        host_secret=host_secret,
+        created_at=datetime.now(),
+        total_questions=total_questions,
     )
 
     rooms[room_id] = room

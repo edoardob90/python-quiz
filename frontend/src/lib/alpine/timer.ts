@@ -16,6 +16,7 @@ export function timer({
     currentQuestionIndex,
     totalQuestions,
     waitingForNext: false,
+    quizComplete: false,
     isStarted: false,
 
     init() {
@@ -37,6 +38,12 @@ export function timer({
         this.currentQuestionIndex = e.detail.currentQuestionIndex;
         this.totalQuestions = e.detail.totalQuestions;
       }) as EventListener);
+
+      // Listen for quiz complete event
+      window.addEventListener("quiz-complete", () => {
+        this.isStarted = false;
+        this.quizComplete = true;
+      });
     },
 
     startTimer() {

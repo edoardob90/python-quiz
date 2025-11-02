@@ -54,6 +54,12 @@ export function quizHost({
           console.log("Question timeout received from backend", data);
           this.questionStatus = "over";
         });
+
+        // Listen for quiz complete
+        this.ws.on("quiz_complete", () => {
+          console.log("Quiz complete!");
+          this.questionStatus = "complete";
+        });
       }
 
       // Fetch initial room state
