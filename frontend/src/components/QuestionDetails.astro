@@ -1,0 +1,37 @@
+---
+/**
+ * Question Details Component
+ *
+ * Show the details of a question in the host panel.
+ *
+ * Props:
+ * - question: The question to display.
+ */
+
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+    question: CollectionEntry<"testQuiz">;
+}
+
+const { question } = Astro.props;
+---
+
+<div class="mt-4 text-sm text-gray-600">
+    <span>
+        Type: {question.data.type}
+    </span>{" "}
+    |
+    <span>
+        {" "}
+        Time:{" "}
+        {question.data.timeLimit}{" "}
+        seconds
+    </span>{" "}
+    |
+    <span>
+        {" "}
+        Points:{" "}
+        {question.data.points}
+    </span>
+</div>
