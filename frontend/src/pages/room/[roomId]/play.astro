@@ -10,16 +10,24 @@ import { getCollection } from "astro:content";
 import Layout from "../../../layouts/Layout.astro";
 import QuizPlayer from "../../../components/QuizPlayer.astro";
 import Timer from "../../../components/Timer.astro";
+import { getQuizName } from "../../../utils/quizUtils";
 
 // Get the room ID from the URL
 const { roomId } = Astro.params;
-
 if (!roomId) {
     return Astro.redirect("/");
 }
 
-// Load questions from content collection
-const questions = await getCollection("testQuiz");
+// Get the quiz ID from the URL query parameter
+const quizId = Astro.url.searchParams.get("quiz_id");
+if (!quizId) {
+    return Astro.redirect("/?error=no-quiz");
+}
+
+// Fetch all the questions for the quiz
+const questions = await getCollection("quiz", ({ id }) =>
+    id.startsWith(`${quizId}/`),
+);
 const sortedQuestions = questions.sort((a, b) => a.id.localeCompare(b.id));
 
 // Convert questions metadata to JSON-serializable format for Alpine.js
@@ -33,11 +41,11 @@ const questionsData = sortedQuestions.map((q, index) => ({
     correct_answer: q.data.correctAnswer,
 }));
 
-// Participant ID will be retrieved from sessionStorage
-const participantIdPlaceholder = "WILL_BE_LOADED_FROM_SESSION";
+// Quiz name
+const quizName = getQuizName(quizId, questions);
 ---
 
-<Layout title="Play: Python Basics Test">
+<Layout title={`Play: ${quizName}`}>
     <div class="bg-gray-100 min-h-screen">
         <!-- Missing Participant ID Warning -->
         <div
@@ -66,7 +74,7 @@ const participantIdPlaceholder = "WILL_BE_LOADED_FROM_SESSION";
                 <div class="flex justify-between items-center">
                     <div>
                         <h1 class="text-3xl font-bold text-gray-800">
-                            Python Basics Test
+                            {quizName}
                         </h1>
                         <p class="text-gray-600">
                             Room: <span class="font-semibold">{roomId}</span>

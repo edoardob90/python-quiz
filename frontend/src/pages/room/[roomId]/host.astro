@@ -11,6 +11,8 @@ import Layout from "../../../layouts/Layout.astro";
 import QuizHost from "../../../components/QuizHost.astro";
 import Leaderboard from "../../../components/Leaderboard.astro";
 import QuestionDetails from "../../../components/QuestionDetails.astro";
+import { getQuizName } from "../../../utils/quizUtils";
+import QuizPlayer from "../../../components/QuizPlayer.astro";
 
 // Get the room ID from the URL
 const { roomId } = Astro.params;
@@ -19,10 +21,16 @@ if (!roomId) {
     return Astro.redirect("/");
 }
 
-// Load questions from content collection
-// In a real app, you'd fetch quiz_id from backend first
-// For now, we assume all rooms use test-quiz
-const questions = await getCollection("testQuiz");
+// Get the quiz ID from the URL query parameter
+const quizId = Astro.url.searchParams.get("quiz_id");
+if (!quizId) {
+    return Astro.redirect("/?error=no-quiz");
+}
+
+// Fetch all the questions for the quiz
+const questions = await getCollection("quiz", ({ id }) =>
+    id.startsWith(`${quizId}/`),
+);
 const sortedQuestions = questions.sort((a, b) => a.id.localeCompare(b.id));
 
 // Convert questions metadata to JSON-serializable format for Alpine.js
@@ -36,12 +44,11 @@ const questionsData = sortedQuestions.map((q, index) => ({
     correctAnswer: q.data.correctAnswer,
 }));
 
-// Host secret will be retrieved from sessionStorage via client-side script
-// (It was stored when the room was created)
-const hostSecretPlaceholder = "WILL_BE_LOADED_FROM_SESSION";
+// Quiz name
+const quizName = getQuizName(quizId, questions);
 ---
 
-<Layout title="Host: Python Basics Test">
+<Layout title={`Host: ${quizName}`}>
     <div class="bg-gray-100 min-h-screen">
         <!-- Missing Host Secret Warning -->
         <div
@@ -72,7 +79,7 @@ const hostSecretPlaceholder = "WILL_BE_LOADED_FROM_SESSION";
                 <div class="flex justify-between items-center">
                     <div>
                         <h1 class="text-3xl font-bold text-gray-800">
-                            Python Basics Test
+                            {quizName}
                         </h1>
                         <p class="text-gray-600">Host Control Panel</p>
                     </div>

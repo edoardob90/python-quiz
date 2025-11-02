@@ -144,7 +144,7 @@ async def join_room(room_id: str, request: JoinRoomRequest):
         },
     )
 
-    return {"participant_id": participant_id}
+    return {"participant_id": participant_id, "quiz_id": rooms[room_id].quiz_id}
 
 
 @app.get("/api/rooms/{room_id}")
