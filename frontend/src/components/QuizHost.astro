@@ -43,8 +43,9 @@ const { roomId, totalQuestions, questionsData } = Astro.props;
             Participants: <span x-text="participantCount"></span>
         </div>
         <div class="text-sm text-gray-600">
-            Question: <span x-text="Math.min(currentQuestion + 1, totalQuestions)"></span> / <span
-                x-text="totalQuestions"></span>
+            Question: <span
+                x-text="Math.min(currentQuestion + 1, totalQuestions)"></span> /
+            <span x-text="totalQuestions"></span>
         </div>
     </div>
 
@@ -128,13 +129,20 @@ const { roomId, totalQuestions, questionsData } = Astro.props;
                 </p>
             </template>
 
-            <div x-show="participants.length > 0" class="space-y-1">
-                <template x-for="(id, idx) in participants" :key="id">
-                    <div class="text-sm bg-gray-50 p-2 rounded">
-                        Participant <span x-text="idx + 1"></span>
-                    </div>
-                </template>
-            </div>
+            <template x-if="participants.length > 0">
+                <ol class="list-decimal list-inside space-y-1">
+                    <template
+                        x-for="(participant, idx) in participants"
+                        :key="participant.id"
+                    >
+                        <li
+                            class="text-sm bg-gray-50 p-1 rounded"
+                            x-text="participant.nickname"
+                        >
+                        </li>
+                    </template>
+                </ol>
+            </template>
         </div>
     </div>
 </div>

@@ -116,7 +116,7 @@ class QuestionData(BaseModel):
     """Question data structure."""
 
     index: int
-    type: str  # "multiple-choice" | "short-answer"
+    type: QuestionType
     text: str
     options: list[str] | None = None  # For multiple choice
     time_limit: int  # Seconds
@@ -155,6 +155,7 @@ class SubmitAnswerRequest(BaseModel):
     participant_id: str
     answer: str
     response_time: int  # Milliseconds
+    time_limit: int  # Seconds
     question_index: int
     correct_answer: list[str]
     question_type: QuestionType

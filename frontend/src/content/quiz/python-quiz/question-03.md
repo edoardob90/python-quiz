@@ -1,7 +1,7 @@
 ---
 quizName: "Python Quiz"
 type: "multiple-choice"
-timeLimit: 30
+timeLimit: 15
 points: 750
 correctAnswer: ["It executes only if the loop completes without hitting a break statement"]
 options: [

@@ -41,8 +41,9 @@ const { timeLimit, currentQuestionIndex = 0, totalQuestions = 1 } = Astro.props;
             </span>
         </template>
 
-        <!-- Waiting for next question (after timeout) -->
-        <template x-if="waitingForNext">
+        <template
+            x-if="waitingForNext && (currentQuestionIndex < totalQuestions - 1)"
+        >
             <span class="text-blue-600">
                 🎯 Get ready for question #<span
                     x-text="currentQuestionIndex + 2"></span>

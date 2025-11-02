@@ -153,7 +153,25 @@ async def get_room_state(room_id: str):
     if room_id not in rooms:
         raise HTTPException(status_code=404, detail="Room not found")
 
-    return rooms[room_id]
+    room = rooms[room_id]
+    participants_list = [
+        {
+            "id": pid,
+            "nickname": participants[pid].nickname,
+            "joined_at": participants[pid].joined_at.isoformat(),
+        }
+        for pid in room.participant_ids
+    ]
+
+    return {
+        "id": room_id,
+        "quiz_id": room.quiz_id,
+        "status": room.status,
+        "current_question": room.current_question,
+        "participants_ids": room.participant_ids,
+        "participants": participants_list,
+        "created_at": room.created_at.isoformat(),
+    }
 
 
 @app.post("/api/rooms/{room_id}/start")
@@ -264,13 +282,13 @@ async def submit_answer(room_id: str, request: SubmitAnswerRequest):
     # Validate answer
     is_correct = validate_answer(answer, correct_answer, question_type)
 
+    # Calculate score using the scoring algorithm
     points = 0
     if is_correct:
-        # Calculate score using the scoring algorithm
         points = calculate_score(
             max_points=max_points,
             response_time=response_time,
-            time_limit=30,  # Could be passed as parameter
+            time_limit=request.time_limit,
             streak=participant.current_streak,
         )
         participant.score += points
