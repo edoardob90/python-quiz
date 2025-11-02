@@ -4,3 +4,8 @@
 div.expressive-code {
   @apply my-4;
 }
+
+/* Alpine.js x-cloak */
+[x-cloak] {
+  display: none !important;
+}
