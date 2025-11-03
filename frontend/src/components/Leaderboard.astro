@@ -7,54 +7,61 @@
  */
 
 interface Props {
-  roomId: string;
+    roomId: string;
 }
 
 const { roomId } = Astro.props;
 ---
 
 <div
-  x-data={`leaderboard({ roomId: '${roomId}' })`}
-  x-init="init()"
-  class="bg-white rounded-lg shadow-lg p-6"
+    x-data={`leaderboard({ roomId: '${roomId}' })`}
+    x-init="init()"
+    class="bg-white rounded-lg shadow-lg p-6"
 >
-  <h2 class="text-2xl font-bold mb-4">Leaderboard</h2>
+    <h2 class="text-2xl font-bold mb-4">Leaderboard</h2>
 
-  <template x-if="isEmpty">
-    <p class="text-gray-500 text-center py-8">
-      Waiting for participants...
-    </p>
-  </template>
+    <template x-if="isEmpty">
+        <p class="text-gray-500 text-center py-8">
+            Waiting for participants...
+        </p>
+    </template>
 
-  <div x-show="!isEmpty" class="space-y-2">
-    <template x-for="player in leaderboard" :key="player.participant_id">
-      <div
-        :class="{
+    <div x-show="!isEmpty" class="space-y-2">
+        <template x-for="player in leaderboard" :key="player.participant_id">
+            <div
+                :class="{
           'bg-yellow-100 border-2 border-yellow-400': player.rank === 1,
           'bg-gray-100 border-2 border-gray-400': player.rank === 2,
           'bg-orange-100 border-2 border-orange-400': player.rank === 3,
           'bg-gray-50': player.rank > 3
         }"
-        class="flex items-center justify-between p-3 rounded"
-      >
-        <div class="flex items-center gap-3">
-          <div class="text-2xl w-8" x-text="getRankEmoji(player.rank)">
-          </div>
+                class="flex items-center justify-between p-3 rounded"
+            >
+                <div class="flex items-center gap-3">
+                    <div
+                        class="text-2xl w-8"
+                        x-text="getRankEmoji(player.rank)"
+                    >
+                    </div>
 
-          <div>
-            <div class="font-semibold" x-text="player.nickname"></div>
+                    <div>
+                        <div class="font-semibold" x-text="player.nickname">
+                        </div>
 
-            <template x-if="player.streak > 0">
-              <div class="text-xs text-orange-600">
-                🔥 <span x-text="player.streak"></span> streak
-              </div>
-            </template>
-          </div>
-        </div>
+                        <template x-if="player.streak > 0">
+                            <div class="text-xs text-orange-600">
+                                🔥 <span x-text="player.streak"></span> streak
+                            </div>
+                        </template>
+                    </div>
+                </div>
 
-        <div class="text-xl font-bold text-blue-600" x-text="player.score.toLocaleString()">
-        </div>
-      </div>
-    </template>
-  </div>
+                <div
+                    class="text-xl font-bold text-blue-600"
+                    x-text="player.score.toLocaleString()"
+                >
+                </div>
+            </div>
+        </template>
+    </div>
 </div>

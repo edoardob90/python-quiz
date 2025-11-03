@@ -21,14 +21,14 @@ const { timeLimit, currentQuestionIndex = 0, totalQuestions = 1 } = Astro.props;
 <div
     x-data={`timer({ timeLimit: ${timeLimit}, currentQuestionIndex: ${currentQuestionIndex}, totalQuestions: ${totalQuestions} })`}
     x-init="init()"
-    x-show="!quizComplete && (isStarted || waitingForNext)"
+    x-show="!quizComplete && (isStarted || showTimeUp || waitingForNext)"
     x-cloak
     class="mb-4 text-center"
 >
     <!-- Timer Display -->
     <div class="text-4xl font-bold">
         <!-- Initial waiting before first question starts -->
-        <template x-if="!isStarted && !waitingForNext">
+        <template x-if="!(isStarted || waitingForNext || showTimeUp)">
             <span class="text-gray-500">⏳ Waiting...</span>
         </template>
 
@@ -41,8 +41,14 @@ const { timeLimit, currentQuestionIndex = 0, totalQuestions = 1 } = Astro.props;
             </span>
         </template>
 
+        <!-- Time's up message -->
+        <template x-if="showTimeUp">
+            <span class="text-red-600"> ⏰ Time's up! </span>
+        </template>
+
+        <!-- Get ready for next question -->
         <template
-            x-if="waitingForNext && (currentQuestionIndex < totalQuestions - 1)"
+            x-if="waitingForNext && !showTimeUp && (currentQuestionIndex < totalQuestions - 1)"
         >
             <span class="text-blue-600">
                 🎯 Get ready for question #<span

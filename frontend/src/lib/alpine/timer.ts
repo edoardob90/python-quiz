@@ -15,6 +15,9 @@ export function timer({
     interval: null as number | null,
     currentQuestionIndex,
     totalQuestions,
+    showTimeUp: false,
+    timeUpDuration: 2, // seconds to show the "Time's up" message
+    timeUpTimeout: null as number | null, // store setTimeout ID for cleanup later
     waitingForNext: false,
     quizComplete: false,
     isStarted: false,
@@ -62,9 +65,14 @@ export function timer({
           clearInterval(this.interval!);
           this.interval = null;
           this.isStarted = false;
-          this.waitingForNext = true;
+          this.showTimeUp = true;
           // Dispatch timeout event
           window.dispatchEvent(new CustomEvent("timer-timeout"));
+          // Transition from "Time's up" to "Waiting for next question"
+          this.timeUpTimeout = window.setTimeout(() => {
+            this.showTimeUp = false;
+            this.waitingForNext = true;
+          }, this.timeUpDuration * 1000);
         }
       }, 1000);
     },
@@ -74,8 +82,14 @@ export function timer({
         clearInterval(this.interval);
         this.interval = null;
       }
+
+      if (this.timeUpTimeout) {
+        clearTimeout(this.timeUpTimeout);
+      }
+
       this.isStarted = false;
       this.waitingForNext = false;
+      this.showTimeUp = false;
     },
 
     resetTimer(newTimeLimit?: number) {
@@ -85,6 +99,7 @@ export function timer({
       }
       this.timeLeft = this.timeLimit;
       this.waitingForNext = false;
+      this.showTimeUp = false;
       this.startTimer();
     },
 

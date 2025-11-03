@@ -119,7 +119,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
 
         // Listen for question timeout event (reveals correct answer)
         this.ws.on("question_timeout", (data: any) => {
-          console.log("Question timeout - revealing correct answer", data);
+          console.log("Question timeout received");
           if (data.correct_answer) {
             this.correctAnswer = data.correct_answer;
             this.hasTimedOut = true;
@@ -191,8 +191,10 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
 
         const data = await response.json();
         this.pendingResult = data;
-        this.hasAnswered = true;
-        console.log("Answer submitted:", data);
+        if (!isTimeout) {
+          this.hasAnswered = true;
+        }
+        console.log("Answer submitted successfully");
       } catch (error) {
         console.error("Error submitting answer:", error);
         alert("Failed to submit answer. Check console for details.");
