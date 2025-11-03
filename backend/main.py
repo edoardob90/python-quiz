@@ -16,6 +16,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from models import (
     Answer,
     JoinRoomRequest,
+    LeaderboardEntry,
+    LeaderboardResponse,
     NextQuestionRequest,
     Participant,
     Room,
@@ -323,7 +325,7 @@ async def submit_answer(room_id: str, request: SubmitAnswerRequest):
 
 
 @app.get("/api/leaderboard/{room_id}")
-async def get_leaderboard(room_id: str):
+async def get_leaderboard(room_id: str) -> LeaderboardResponse:
     """
     Get current leaderboard for a room.
 
@@ -333,28 +335,21 @@ async def get_leaderboard(room_id: str):
         raise HTTPException(status_code=404, detail="Room not found")
 
     room = rooms[room_id]
-    leaderboard = []
 
-    for pid in room.participant_ids:
-        if pid in participants:
-            p = participants[pid]
-            leaderboard.append(
-                {
-                    "participant_id": pid,
-                    "nickname": p.nickname,
-                    "score": p.score,
-                    "streak": p.current_streak,
-                }
-            )
+    # Retrieve the participants and sort them by score (descending)
+    participants_list = sorted(
+        (participants[pid] for pid in room.participant_ids if pid in participants),
+        key=lambda p: p.score,
+        reverse=True,
+    )
 
-    # Sort by score descending
-    leaderboard.sort(key=lambda x: x["score"], reverse=True)
-
-    # Add ranks
-    for i, entry in enumerate(leaderboard):
-        entry["rank"] = i + 1
-
-    return {"leaderboard": leaderboard}
+    # Return a ranked leaderboard
+    return LeaderboardResponse(
+        leaderboard=[
+            LeaderboardEntry.from_participant(p, rank=i + 1)
+            for i, p in enumerate(participants_list)
+        ]
+    )
 
 
 # === WebSocket Endpoints ===
@@ -420,7 +415,7 @@ async def broadcast_leaderboard(room_id: str):
 
     await broadcast_to_room(
         room_id,
-        {"type": "leaderboard_updated", "leaderboard": leaderboard_data["leaderboard"]},
+        {"type": "leaderboard_updated", "leaderboard": leaderboard_data},
     )
 
 
