@@ -74,6 +74,16 @@ export function quizHost({
 
       // Fetch initial room state
       await this.fetchRoomState();
+
+      // Fallback: Listed for local timer timeout event
+      window.addEventListener("timer-timeout", () => {
+        if (this.questionStatus === "active") {
+          console.log(
+            "Timer expired (local fallback), marking question as 'over'",
+          );
+          this.questionStatus = "over";
+        }
+      });
     },
 
     async fetchRoomState() {
