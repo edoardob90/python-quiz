@@ -5,11 +5,14 @@ how Python powers the quiz backend.
 """
 
 import asyncio
+import logging
 import os
 import secrets
 from contextlib import asynccontextmanager
 from datetime import datetime
+from typing import Any
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -27,6 +30,12 @@ from models import (
 from scoring import calculate_score
 from storage import active_question_answers, answers, participants, rooms
 from validation import validate_answer
+
+# Setup logger
+logger = logging.getLogger(__name__)
+
+# Read .env file
+_ = load_dotenv()
 
 
 # Lifespan event replacing @app.on_event()
@@ -382,7 +391,7 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
             connected_clients[room_id].remove(websocket)
 
 
-async def broadcast_to_room(room_id: str, message: dict):
+async def broadcast_to_room(room_id: str, message: dict[str, Any]) -> None:
     """
     Broadcast message to all clients in a room.
 
@@ -393,20 +402,31 @@ async def broadcast_to_room(room_id: str, message: dict):
         message: JSON message to send
     """
     if room_id not in connected_clients:
+        logger.warning(f"Cannot broadcast to room {room_id}: no connected clients")
         return
 
-    disconnected = []
+    client_count = len(connected_clients[room_id])
+    message_type = message.get("type", "unknown")
 
+    disconnected = []
     for client in connected_clients[room_id]:
         try:
             await client.send_json(message)
-        except:
+        except Exception as e:
             # Client disconnected
+            logger.error(
+                f"Failed to send '{message_type}' message to client in room {room_id}: {e}"
+            )
             disconnected.append(client)
 
     # Clean up disconnected clients
     for client in disconnected:
         connected_clients[room_id].remove(client)
+
+    success_count = client_count - len(disconnected)
+    logger.info(
+        f"Broadcasted '{message_type}' to {success_count}/{client_count} clients in room {room_id}"
+    )
 
 
 async def broadcast_leaderboard(room_id: str):
@@ -415,7 +435,12 @@ async def broadcast_leaderboard(room_id: str):
 
     await broadcast_to_room(
         room_id,
-        {"type": "leaderboard_updated", "leaderboard": leaderboard_data},
+        {
+            "type": "leaderboard_updated",
+            "leaderboard": [
+                entry.model_dump() for entry in leaderboard_data.leaderboard
+            ],
+        },
     )
 
 
@@ -448,4 +473,8 @@ async def schedule_timeout_broadcast(
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        app,
+        host=os.getenv("HOST", "0.0.0.0"),
+        port=int(os.getenv("PORT", "8000")),
+    )
