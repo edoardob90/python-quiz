@@ -50,16 +50,18 @@ const quizIds = [...new Set(allQuestions.map((q) => q.id.split("/")[0]))];
                         Create a room, control questions, and watch participants
                         compete in real-time
                     </p>
-                    {
-                        quizIds.map((quizId) => (
-                            <a
-                                href={`/create-room?quiz=${quizId}`}
-                                class="block w-full py-3 px-6 bg-blue-600 text-white text-center rounded-lg font-semibold hover:bg-blue-700 transition"
-                            >
-                                Host {getQuizName(quizId, allQuestions)} →
-                            </a>
-                        ))
-                    }
+                    <div class="grid space-y-2">
+                        {
+                            quizIds.map((quizId) => (
+                                <a
+                                    href={`/create-room?quiz=${quizId}`}
+                                    class="block w-full py-3 px-6 bg-blue-600 text-white text-center rounded-lg font-semibold hover:bg-blue-700 transition"
+                                >
+                                    Host {getQuizName(quizId, allQuestions)} →
+                                </a>
+                            ))
+                        }
+                    </div>
                 </div>
 
                 <!-- Play Card -->
