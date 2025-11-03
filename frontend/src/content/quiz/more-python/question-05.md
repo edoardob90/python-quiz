@@ -1,7 +1,7 @@
 ---
-quizName: "Python Quiz"
+quizName: "More Python Quiz"
 type: "multiple-choice"
-timeLimit: 10
+timeLimit: 15
 points: 750
 correctAnswer: ["greet(\"David\", name=\"Eve\")"]
 options: [

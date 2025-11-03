@@ -1,7 +1,7 @@
 ---
-quizName: "Python Quiz"
+quizName: "More Python Quiz"
 type: "short-answer"
-timeLimit: 90
+timeLimit: 30
 points: 1250
 correctAnswer: [
   "from .module_b import",

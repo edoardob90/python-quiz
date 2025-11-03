@@ -1,7 +1,7 @@
 ---
-quizName: "Python Quiz"
+quizName: "More Python Quiz"
 type: "short-answer"
-timeLimit: 20
+timeLimit: 15
 points: 1250
 correctAnswer: ["__lt__", "__lt__(self, other)"]
 ---

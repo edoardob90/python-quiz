@@ -1,7 +1,7 @@
 ---
-quizName: "Python Quiz"
+quizName: "More Python Quiz"
 type: "multiple-choice"
-timeLimit: 30
+timeLimit: 20
 points: 1000
 correctAnswer: ["5"]
 options: ["2", "3", "5", "Error"]

@@ -1,7 +1,7 @@
 ---
-quizName: "Python Quiz"
+quizName: "More Python Quiz"
 type: "short-answer"
-timeLimit: 15
+timeLimit: 10
 points: 750
 correctAnswer: ["finally"]
 ---
