@@ -18,17 +18,27 @@ interface QuestionData {
   correctAnswer: string[];
 }
 
+interface Participant {
+  id: string;
+  nickname: string;
+  joinedAt: string;
+}
+
 export function quizHost({
   roomId = "",
   totalQuestions = 0,
   questionsData = [] as QuestionData[],
 } = {}) {
+  // TODO(human): Bug 2 - Change participants type to store objects
+  // Current: participants: [] as string[] (just IDs)
+  // Fix: participants: [] as Array<{ id: string; nickname: string }>
+  // Learning: TypeScript type for array of objects with id and nickname fields
   return {
     roomId,
     hostSecret: "", // Set via data attribute from sessionStorage
     totalQuestions,
     currentQuestion: 0,
-    participants: [] as string[],
+    participants: [] as Participant[],
     questionStatus: "idle" as "idle" | "active" | "over" | "complete",
     ws: null as QuizWebSocket | null,
     questionsData,
@@ -75,7 +85,11 @@ export function quizHost({
 
         const data = await response.json();
         this.currentQuestion = data.current_question || 0;
-        this.participants = data.participant_ids || [];
+        this.participants = (data.participants || []).sort(
+          (a: Participant, b: Participant) => {
+            new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime();
+          },
+        );
       } catch (error) {
         console.error("Error fetching room state:", error);
       }

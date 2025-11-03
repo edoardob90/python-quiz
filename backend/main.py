@@ -16,6 +16,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from models import (
     Answer,
     JoinRoomRequest,
+    LeaderboardEntry,
+    LeaderboardResponse,
     NextQuestionRequest,
     Participant,
     Room,
@@ -144,7 +146,7 @@ async def join_room(room_id: str, request: JoinRoomRequest):
         },
     )
 
-    return {"participant_id": participant_id}
+    return {"participant_id": participant_id, "quiz_id": rooms[room_id].quiz_id}
 
 
 @app.get("/api/rooms/{room_id}")
@@ -153,7 +155,25 @@ async def get_room_state(room_id: str):
     if room_id not in rooms:
         raise HTTPException(status_code=404, detail="Room not found")
 
-    return rooms[room_id]
+    room = rooms[room_id]
+    participants_list = [
+        {
+            "id": pid,
+            "nickname": participants[pid].nickname,
+            "joined_at": participants[pid].joined_at.isoformat(),
+        }
+        for pid in room.participant_ids
+    ]
+
+    return {
+        "id": room_id,
+        "quiz_id": room.quiz_id,
+        "status": room.status,
+        "current_question": room.current_question,
+        "participants_ids": room.participant_ids,
+        "participants": participants_list,
+        "created_at": room.created_at.isoformat(),
+    }
 
 
 @app.post("/api/rooms/{room_id}/start")
@@ -264,13 +284,13 @@ async def submit_answer(room_id: str, request: SubmitAnswerRequest):
     # Validate answer
     is_correct = validate_answer(answer, correct_answer, question_type)
 
+    # Calculate score using the scoring algorithm
     points = 0
     if is_correct:
-        # Calculate score using the scoring algorithm
         points = calculate_score(
             max_points=max_points,
             response_time=response_time,
-            time_limit=30,  # Could be passed as parameter
+            time_limit=request.time_limit,
             streak=participant.current_streak,
         )
         participant.score += points
@@ -305,7 +325,7 @@ async def submit_answer(room_id: str, request: SubmitAnswerRequest):
 
 
 @app.get("/api/leaderboard/{room_id}")
-async def get_leaderboard(room_id: str):
+async def get_leaderboard(room_id: str) -> LeaderboardResponse:
     """
     Get current leaderboard for a room.
 
@@ -315,28 +335,21 @@ async def get_leaderboard(room_id: str):
         raise HTTPException(status_code=404, detail="Room not found")
 
     room = rooms[room_id]
-    leaderboard = []
 
-    for pid in room.participant_ids:
-        if pid in participants:
-            p = participants[pid]
-            leaderboard.append(
-                {
-                    "participant_id": pid,
-                    "nickname": p.nickname,
-                    "score": p.score,
-                    "streak": p.current_streak,
-                }
-            )
+    # Retrieve the participants and sort them by score (descending)
+    participants_list = sorted(
+        (participants[pid] for pid in room.participant_ids if pid in participants),
+        key=lambda p: p.score,
+        reverse=True,
+    )
 
-    # Sort by score descending
-    leaderboard.sort(key=lambda x: x["score"], reverse=True)
-
-    # Add ranks
-    for i, entry in enumerate(leaderboard):
-        entry["rank"] = i + 1
-
-    return {"leaderboard": leaderboard}
+    # Return a ranked leaderboard
+    return LeaderboardResponse(
+        leaderboard=[
+            LeaderboardEntry.from_participant(p, rank=i + 1)
+            for i, p in enumerate(participants_list)
+        ]
+    )
 
 
 # === WebSocket Endpoints ===
@@ -402,7 +415,7 @@ async def broadcast_leaderboard(room_id: str):
 
     await broadcast_to_room(
         room_id,
-        {"type": "leaderboard_updated", "leaderboard": leaderboard_data["leaderboard"]},
+        {"type": "leaderboard_updated", "leaderboard": leaderboard_data},
     )
 
 

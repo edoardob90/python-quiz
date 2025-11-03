@@ -1,4 +1,5 @@
 ---
+quizName: "Python Quiz"
 type: "short-answer"
 timeLimit: 90
 points: 1250

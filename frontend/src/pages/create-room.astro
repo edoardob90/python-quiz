@@ -12,11 +12,16 @@ import { getCollection } from "astro:content";
 const BACKEND_API =
     import.meta.env.PUBLIC_BACKEND_API || "http://localhost:8000";
 
-// Get quiz parameter from URL
-const quizId = Astro.url.searchParams.get("quiz") || "test-quiz";
+// Fetch the quizId from URL
+const quizId = Astro.url.searchParams.get("quiz");
+if (!quizId) {
+    return Astro.redirect("/?error=no-quiz");
+}
 
-// Load the quiz and get the total number of questions
-const questions = await getCollection("testQuiz");
+// Fetch the questions for the chosen quiz
+const questions = await getCollection("quiz", ({ id }) =>
+    id.startsWith(`${quizId}/`),
+);
 const totalQuestions = questions.length;
 ---
 
@@ -108,9 +113,14 @@ uv run uvicorn main:app --reload</pre>
                 data.host_secret,
             );
 
-            // Redirect to host page with the real room ID
-            console.log(`Redirecting to /room/${data.room_id}/host`);
-            window.location.href = `/room/${data.room_id}/host`;
+            // Store the quizId in sessionStorage so that host and player's page can access it
+            sessionStorage.setItem(`quiz_id_${data.room_id}`, quizId);
+
+            // Redirect to the room page with the quizId query parameter
+            console.log(
+                `Redirecting to /room/${data.room_id}/host with quizId=${quizId}`,
+            );
+            window.location.href = `/room/${data.room_id}/host?quiz_id=${quizId}`;
         } catch (error) {
             console.error("Failed to create room:", error);
 

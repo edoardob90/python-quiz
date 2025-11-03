@@ -150,14 +150,6 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
       window.addEventListener("timer-update", (e: any) => {
         this.timeLeft = e.detail.timeLeft;
       });
-
-      // DEBUG
-      console.log("QuizPlayer initialized:", {
-        waitingForHost: this.waitingForHost,
-        quizComplete: this.quizComplete,
-        currentQuestionIndex: this.currentQuestionIndex,
-        totalQuestions: this.questions.length,
-      });
     },
 
     resetAnswer() {
@@ -186,6 +178,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
               participant_id: this.participantId,
               answer: answer,
               response_time: responseTime,
+              time_limit: this.currentQuestion.time_limit,
               question_index: this.currentQuestion.index,
               correct_answer: this.currentQuestion.correct_answer,
               question_type: this.currentQuestion.type,

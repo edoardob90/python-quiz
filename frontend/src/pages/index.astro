@@ -1,112 +1,145 @@
 ---
 // Landing Page - Quiz Launch
-// Simple launch page for the test quiz
 
-import '../styles/global.css';
+import QuizHost from "../components/QuizHost.astro";
+import "../styles/global.css";
+import { getCollection } from "astro:content";
+import { getQuizName } from "../utils/quizUtils";
 
+// Get all available quizzes
+const allQuestions = await getCollection("quiz");
+const quizIds = [...new Set(allQuestions.map((q) => q.id.split("/")[0]))];
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quiz Platform</title>
-</head>
-<body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen flex items-center justify-center">
-  <div class="container mx-auto px-4 py-8 max-w-4xl">
-    <!-- Hero Section -->
-    <div class="text-center mb-12">
-      <div class="text-6xl mb-4">🎯</div>
-      <h1 class="text-5xl font-bold text-gray-800 mb-4">
-        Quiz Platform
-      </h1>
-      <p class="text-xl text-gray-600 mb-2">
-        Real-time quiz platform powered by Python & FastAPI
-      </p>
-      <p class="text-gray-500">
-        Test your knowledge with live scoring and leaderboards
-      </p>
-    </div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Quiz Platform</title>
+    </head>
+    <body
+        class="bg-linear-to-br from-blue-50 to-purple-50 min-h-screen flex items-center justify-center"
+    >
+        <div class="container mx-auto px-4 py-8 max-w-4xl">
+            <!-- Hero Section -->
+            <div class="text-center mb-12">
+                <div class="text-6xl mb-4">🎯</div>
+                <h1 class="text-5xl font-bold text-gray-800 mb-4">
+                    Quiz Platform
+                </h1>
+                <p class="text-xl text-gray-600 mb-2">
+                    Real-time quiz platform powered by Python & FastAPI
+                </p>
+                <p class="text-gray-500">
+                    Test your knowledge with live scoring and leaderboards
+                </p>
+            </div>
 
-    <!-- Action Cards -->
-    <div class="grid md:grid-cols-2 gap-6 mb-12">
-      <!-- Host Card -->
-      <div class="bg-white rounded-2xl shadow-xl p-8 border-2 border-transparent hover:border-blue-500 transition">
-        <div class="text-4xl mb-4">👨‍🏫</div>
-        <h2 class="text-2xl font-bold text-gray-800 mb-3">
-          Host a Quiz
-        </h2>
-        <p class="text-gray-600 mb-6">
-          Create a room, control questions, and watch participants compete in real-time
-        </p>
-        <a
-          href="/create-room?quiz=test-quiz"
-          class="block w-full py-3 px-6 bg-blue-600 text-white text-center rounded-lg font-semibold hover:bg-blue-700 transition"
-        >
-          Host Python Basics Quiz →
-        </a>
-      </div>
+            <!-- Action Cards -->
+            <div class="grid md:grid-cols-2 gap-6 mb-12">
+                <!-- Host Card -->
+                <div
+                    class="bg-white rounded-2xl shadow-xl p-8 border-2 border-transparent hover:border-blue-500 transition"
+                >
+                    <div class="text-4xl mb-4">👨‍🏫</div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-3">
+                        Host a Quiz
+                    </h2>
+                    <p class="text-gray-600 mb-6">
+                        Create a room, control questions, and watch participants
+                        compete in real-time
+                    </p>
+                    {
+                        quizIds.map((quizId) => (
+                            <a
+                                href={`/create-room?quiz=${quizId}`}
+                                class="block w-full py-3 px-6 bg-blue-600 text-white text-center rounded-lg font-semibold hover:bg-blue-700 transition"
+                            >
+                                Host {getQuizName(quizId, allQuestions)} →
+                            </a>
+                        ))
+                    }
+                </div>
 
-      <!-- Play Card -->
-      <div class="bg-white rounded-2xl shadow-xl p-8 border-2 border-transparent hover:border-purple-500 transition">
-        <div class="text-4xl mb-4">🎮</div>
-        <h2 class="text-2xl font-bold text-gray-800 mb-3">
-          Join a Quiz
-        </h2>
-        <p class="text-gray-600 mb-6">
-          Enter a room code to participate and compete for the top spot on the leaderboard
-        </p>
-        <a
-          href="/join"
-          class="block w-full py-3 px-6 bg-purple-600 text-white text-center rounded-lg font-semibold hover:bg-purple-700 transition"
-        >
-          Join Quiz →
-        </a>
-      </div>
-    </div>
+                <!-- Play Card -->
+                <div
+                    class="bg-white rounded-2xl shadow-xl p-8 border-2 border-transparent hover:border-purple-500 transition"
+                >
+                    <div class="text-4xl mb-4">🎮</div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-3">
+                        Join a Quiz
+                    </h2>
+                    <p class="text-gray-600 mb-6">
+                        Enter a room code to participate and compete for the top
+                        spot on the leaderboard
+                    </p>
+                    <a
+                        href="/join"
+                        class="block w-full py-3 px-6 bg-purple-600 text-white text-center rounded-lg font-semibold hover:bg-purple-700 transition"
+                    >
+                        Join Quiz →
+                    </a>
+                </div>
+            </div>
 
-    <!-- How It Works -->
-    <div class="bg-white/70 backdrop-blur rounded-2xl shadow-lg p-8">
-      <h3 class="text-2xl font-semibold mb-6 text-center">How It Works</h3>
-      <div class="grid md:grid-cols-3 gap-6 text-center">
-        <div>
-          <div class="text-3xl mb-2">1️⃣</div>
-          <h4 class="font-semibold mb-2">Create or Join</h4>
-          <p class="text-sm text-gray-600">Host creates a room or player joins with room code</p>
+            <!-- How It Works -->
+            <div class="bg-white/70 backdrop-blur rounded-2xl shadow-lg p-8">
+                <h3 class="text-2xl font-semibold mb-6 text-center">
+                    How It Works
+                </h3>
+                <div class="grid md:grid-cols-3 gap-6 text-center">
+                    <div>
+                        <div class="text-3xl mb-2">1️⃣</div>
+                        <h4 class="font-semibold mb-2">Create or Join</h4>
+                        <p class="text-sm text-gray-600">
+                            Host creates a room or player joins with room code
+                        </p>
+                    </div>
+                    <div>
+                        <div class="text-3xl mb-2">2️⃣</div>
+                        <h4 class="font-semibold mb-2">Answer Questions</h4>
+                        <p class="text-sm text-gray-600">
+                            Players answer timed questions for points
+                        </p>
+                    </div>
+                    <div>
+                        <div class="text-3xl mb-2">3️⃣</div>
+                        <h4 class="font-semibold mb-2">Win!</h4>
+                        <p class="text-sm text-gray-600">
+                            Watch live leaderboard and compete for the top spot
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div class="bg-white/50 backdrop-blur rounded-lg p-4">
+                    <div class="text-2xl mb-1">⚡</div>
+                    <p class="text-sm font-medium text-gray-700">
+                        Real-time Updates
+                    </p>
+                </div>
+                <div class="bg-white/50 backdrop-blur rounded-lg p-4">
+                    <div class="text-2xl mb-1">🔥</div>
+                    <p class="text-sm font-medium text-gray-700">
+                        Streak System
+                    </p>
+                </div>
+                <div class="bg-white/50 backdrop-blur rounded-lg p-4">
+                    <div class="text-2xl mb-1">⏱️</div>
+                    <p class="text-sm font-medium text-gray-700">
+                        Timed Questions
+                    </p>
+                </div>
+                <div class="bg-white/50 backdrop-blur rounded-lg p-4">
+                    <div class="text-2xl mb-1">📱</div>
+                    <p class="text-sm font-medium text-gray-700">
+                        Mobile Friendly
+                    </p>
+                </div>
+            </div>
         </div>
-        <div>
-          <div class="text-3xl mb-2">2️⃣</div>
-          <h4 class="font-semibold mb-2">Answer Questions</h4>
-          <p class="text-sm text-gray-600">Players answer timed questions for points</p>
-        </div>
-        <div>
-          <div class="text-3xl mb-2">3️⃣</div>
-          <h4 class="font-semibold mb-2">Win!</h4>
-          <p class="text-sm text-gray-600">Watch live leaderboard and compete for the top spot</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Features -->
-    <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-      <div class="bg-white/50 backdrop-blur rounded-lg p-4">
-        <div class="text-2xl mb-1">⚡</div>
-        <p class="text-sm font-medium text-gray-700">Real-time Updates</p>
-      </div>
-      <div class="bg-white/50 backdrop-blur rounded-lg p-4">
-        <div class="text-2xl mb-1">🔥</div>
-        <p class="text-sm font-medium text-gray-700">Streak System</p>
-      </div>
-      <div class="bg-white/50 backdrop-blur rounded-lg p-4">
-        <div class="text-2xl mb-1">⏱️</div>
-        <p class="text-sm font-medium text-gray-700">Timed Questions</p>
-      </div>
-      <div class="bg-white/50 backdrop-blur rounded-lg p-4">
-        <div class="text-2xl mb-1">📱</div>
-        <p class="text-sm font-medium text-gray-700">Mobile Friendly</p>
-      </div>
-    </div>
-  </div>
-</body>
+    </body>
 </html>

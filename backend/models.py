@@ -100,6 +100,35 @@ class Participant(BaseModel):
     joined_at: datetime
 
 
+class LeaderboardEntry(BaseModel):
+    """Leaderboard entry model."""
+
+    participant_id: str
+    nickname: str
+    score: int
+    rank: int
+    streak: int
+
+    @classmethod
+    def from_participant(
+        cls, participant: Participant, rank: int
+    ) -> "LeaderboardEntry":
+        """Construct from a Participant with calculated rank"""
+        return cls(
+            participant_id=participant.id,
+            nickname=participant.nickname,
+            score=participant.score,
+            rank=rank,
+            streak=participant.current_streak,
+        )
+
+
+class LeaderboardResponse(BaseModel):
+    """Leaderboard response model."""
+
+    leaderboard: list[LeaderboardEntry]
+
+
 class Answer(BaseModel):
     """Submitted answer model."""
 
@@ -116,7 +145,7 @@ class QuestionData(BaseModel):
     """Question data structure."""
 
     index: int
-    type: str  # "multiple-choice" | "short-answer"
+    type: QuestionType
     text: str
     options: list[str] | None = None  # For multiple choice
     time_limit: int  # Seconds
@@ -155,6 +184,7 @@ class SubmitAnswerRequest(BaseModel):
     participant_id: str
     answer: str
     response_time: int  # Milliseconds
+    time_limit: int  # Seconds
     question_index: int
     correct_answer: list[str]
     question_type: QuestionType

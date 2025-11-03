@@ -10,16 +10,24 @@ import { getCollection } from "astro:content";
 import Layout from "../../../layouts/Layout.astro";
 import QuizPlayer from "../../../components/QuizPlayer.astro";
 import Timer from "../../../components/Timer.astro";
+import { getQuizName } from "../../../utils/quizUtils";
 
 // Get the room ID from the URL
 const { roomId } = Astro.params;
-
 if (!roomId) {
     return Astro.redirect("/");
 }
 
-// Load questions from content collection
-const questions = await getCollection("testQuiz");
+// Get the quiz ID from the URL query parameter
+const quizId = Astro.url.searchParams.get("quiz_id");
+if (!quizId) {
+    return Astro.redirect("/?error=no-quiz");
+}
+
+// Fetch all the questions for the quiz
+const questions = await getCollection("quiz", ({ id }) =>
+    id.startsWith(`${quizId}/`),
+);
 const sortedQuestions = questions.sort((a, b) => a.id.localeCompare(b.id));
 
 // Convert questions metadata to JSON-serializable format for Alpine.js
@@ -33,11 +41,11 @@ const questionsData = sortedQuestions.map((q, index) => ({
     correct_answer: q.data.correctAnswer,
 }));
 
-// Participant ID will be retrieved from sessionStorage
-const participantIdPlaceholder = "WILL_BE_LOADED_FROM_SESSION";
+// Quiz name
+const quizName = getQuizName(quizId, questions);
 ---
 
-<Layout title="Play: Python Basics Test">
+<Layout title={`Play: ${quizName}`}>
     <div class="bg-gray-100 min-h-screen">
         <!-- Missing Participant ID Warning -->
         <div
@@ -66,7 +74,7 @@ const participantIdPlaceholder = "WILL_BE_LOADED_FROM_SESSION";
                 <div class="flex justify-between items-center">
                     <div>
                         <h1 class="text-3xl font-bold text-gray-800">
-                            Python Basics Test
+                            {quizName}
                         </h1>
                         <p class="text-gray-600">
                             Room: <span class="font-semibold">{roomId}</span>
@@ -113,28 +121,6 @@ const participantIdPlaceholder = "WILL_BE_LOADED_FROM_SESSION";
                     <li>Watch your position on the leaderboard!</li>
                 </ul>
             </div>
-
-            <!-- Debug Info -->
-            <div class="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <details>
-                    <summary
-                        class="cursor-pointer font-semibold text-gray-700 mb-2"
-                    >
-                        🔧 Debug Info
-                    </summary>
-                    <div class="text-sm text-gray-600 space-y-2">
-                        <p><strong>Room ID:</strong> {roomId}</p>
-                        <p>
-                            <strong>Questions available:</strong>
-                            {sortedQuestions.length}
-                        </p>
-                        <p>
-                            <strong>Participant ID:</strong>
-                            <span id="debug-participant-id">Loading...</span>
-                        </p>
-                    </div>
-                </details>
-            </div>
         </div>
     </div>
 </Layout>
@@ -150,10 +136,6 @@ const participantIdPlaceholder = "WILL_BE_LOADED_FROM_SESSION";
             .getElementById("no-participant-warning")
             .classList.remove("hidden");
     } else {
-        // Update debug info
-        document.getElementById("debug-participant-id").textContent =
-            participantId.substring(0, 15) + "...";
-
         // Inject participantId into the QuizPlayer component via data attribute
         const playerContainer = document.getElementById(
             "player-controls-container",
