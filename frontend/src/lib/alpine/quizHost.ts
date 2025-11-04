@@ -42,6 +42,8 @@ export function quizHost({
     questionStatus: "idle" as "idle" | "active" | "over" | "complete",
     ws: null as QuizWebSocket | null,
     questionsData,
+    hostTimeLeft: 0,
+    hostTimerInterval: null as number | null,
     $el: null as any, // Alpine.js magic property
 
     async init() {
@@ -63,6 +65,13 @@ export function quizHost({
         this.ws.on("question_timeout", (data: any) => {
           console.log("Question timeout received from backend", data);
           this.questionStatus = "over";
+
+          // Stop host timer
+          if (this.hostTimerInterval !== null) {
+            clearInterval(this.hostTimerInterval);
+            this.hostTimerInterval = null;
+          }
+          this.hostTimeLeft = 0;
         });
 
         // Listen for quiz complete
@@ -136,8 +145,19 @@ export function quizHost({
         if (!response.ok) throw new Error("Failed to start question");
 
         this.questionStatus = "active";
+
+        // Start host timer
+        this.hostTimeLeft = currentQuestionData.timeLimit;
+        this.hostTimerInterval = window.setInterval(() => {
+          this.hostTimeLeft--;
+          if (this.hostTimeLeft <= 0) {
+            clearInterval(this.hostTimerInterval!);
+            this.hostTimerInterval = null;
+          }
+        }, 1000);
+
         console.log(
-          "Question started with correct answer:",
+          "Question started. Correct answer:",
           currentQuestionData.correctAnswer,
         );
       } catch (error) {
@@ -147,6 +167,13 @@ export function quizHost({
     },
 
     async nextQuestion() {
+      // Stop the host timer if running
+      if (this.hostTimerInterval !== null) {
+        clearInterval(this.hostTimerInterval);
+        this.hostTimerInterval = null;
+      }
+
+      // Check room is valid and we have set a host secret
       if (!this.roomId || !this.hostSecret) {
         console.error("Missing roomId or hostSecret");
         return;

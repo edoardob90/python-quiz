@@ -64,7 +64,7 @@ const { roomId, totalQuestions, questionsData } = Astro.props;
             x-show="questionStatus === 'active'"
             class="p-3 bg-green-100 text-green-800 rounded text-center font-semibold"
         >
-            Question Active
+            ⏳ Question Active • <span x-text="hostTimeLeft"></span>s
         </div>
 
         <!-- Question's timer is expired -->
