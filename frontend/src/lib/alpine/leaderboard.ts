@@ -65,14 +65,24 @@ export function leaderboard({ roomId = "" } = {}) {
     },
 
     getRankEmoji(rank: number): string {
+      // No scores yet
+      if (!this.hasAnyScore) {
+        return "🐍";
+      }
+
+      // With scores: show medals or default
       if (rank === 1) return "🥇";
       if (rank === 2) return "🥈";
       if (rank === 3) return "🥉";
-      return "🏅";
+      return "🐍";
     },
 
     get isEmpty(): boolean {
       return this.leaderboard.length === 0;
+    },
+
+    get hasAnyScore(): boolean {
+      return this.leaderboard.some((participant) => participant.score > 0);
     },
   };
 }
