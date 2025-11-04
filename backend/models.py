@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 from enum import Enum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class RoomStatus(Enum):
@@ -25,7 +25,7 @@ class QuestionType(Enum):
 class Room(BaseModel):
     """Quiz room/session model."""
 
-    id: str  # Room code like "GAME1234"
+    id: str  # Unique identifier for the room
     quiz_id: str  # Quiz identifier from markdown filename
     host_secret: str  # Authentication token for host
     total_questions: int = 0
@@ -111,9 +111,18 @@ class LeaderboardEntry(BaseModel):
 
     @classmethod
     def from_participant(
-        cls, participant: Participant, rank: int
+        cls, participant: Participant, rank: int = -1
     ) -> "LeaderboardEntry":
-        """Construct from a Participant with calculated rank"""
+        """
+        Construct from a Participant instance.
+
+        Args:
+            participant: The participant instance to construct from.
+            rank: The rank of the participant in the leaderboard. Defaults to -1.
+
+        Returns:
+            LeaderboardEntry: The constructed leaderboard entry.
+        """
         return cls(
             participant_id=participant.id,
             nickname=participant.nickname,
@@ -121,6 +130,37 @@ class LeaderboardEntry(BaseModel):
             rank=rank,
             streak=participant.current_streak,
         )
+
+
+class Leaderboard(BaseModel):
+    """Leaderboard base model with business logic."""
+
+    room_id: str
+    entries: list[LeaderboardEntry] = Field(default_factory=list)
+
+    def _sort_and_rank(self) -> None:
+        """Sort entries by score and assign ranks."""
+        self.entries.sort(key=lambda e: e.score, reverse=True)
+        for i, entry in enumerate(self.entries):
+            entry.rank = i + 1
+
+    def add_participant(self, participant: Participant) -> None:
+        """Add a new participant with default score."""
+        entry = LeaderboardEntry.from_participant(participant)
+        self.entries.append(entry)
+
+    def recalculate(self, participants: dict[str, Participant], room: Room) -> None:
+        """Recalculate the scores from participants storage."""
+        self.entries = [
+            LeaderboardEntry.from_participant(participants[pid])
+            for pid in room.participant_ids
+            if pid in participants
+        ]
+        self._sort_and_rank()
+
+    def to_response(self) -> "LeaderboardResponse":
+        """Convert the leaderboard to a response model."""
+        return LeaderboardResponse(leaderboard=self.entries)
 
 
 class LeaderboardResponse(BaseModel):

@@ -4,9 +4,10 @@
  * Displays real-time leaderboard with polling and WebSocket updates.
  */
 
-import { QuizWebSocket } from '../websocket';
+import { QuizWebSocket } from "../websocket";
 
-const BACKEND_API = import.meta.env.PUBLIC_BACKEND_API || 'http://localhost:8000';
+const BACKEND_API =
+  import.meta.env.PUBLIC_BACKEND_API || "http://localhost:8000";
 
 interface LeaderboardEntry {
   participant_id: string;
@@ -16,7 +17,7 @@ interface LeaderboardEntry {
   rank: number;
 }
 
-export function leaderboard({ roomId = '' } = {}) {
+export function leaderboard({ roomId = "" } = {}) {
   return {
     roomId,
     leaderboard: [] as LeaderboardEntry[],
@@ -24,20 +25,15 @@ export function leaderboard({ roomId = '' } = {}) {
     ws: null as QuizWebSocket | null,
 
     init() {
-      // Start polling immediately
+      // Fetch initial leaderboard data
       this.fetchLeaderboard();
-
-      // Poll every 2 seconds as fallback
-      this.pollInterval = window.setInterval(() => {
-        this.fetchLeaderboard();
-      }, 2000);
 
       // Connect to WebSocket for real-time updates
       if (this.roomId) {
         this.ws = new QuizWebSocket(this.roomId);
         this.ws.connect();
 
-        this.ws.on('leaderboard_updated', (data: any) => {
+        this.ws.on("leaderboard_updated", (data: any) => {
           if (data.leaderboard) {
             this.leaderboard = data.leaderboard;
           }
@@ -49,21 +45,19 @@ export function leaderboard({ roomId = '' } = {}) {
       if (!this.roomId) return;
 
       try {
-        const response = await fetch(`${BACKEND_API}/api/leaderboard/${this.roomId}`);
-        if (!response.ok) throw new Error('Failed to fetch leaderboard');
+        const response = await fetch(
+          `${BACKEND_API}/api/leaderboard/${this.roomId}`,
+        );
+        if (!response.ok) throw new Error("Failed to fetch leaderboard");
 
         const data = await response.json();
         this.leaderboard = data.leaderboard || [];
       } catch (error) {
-        console.error('Error fetching leaderboard:', error);
+        console.error("Error fetching leaderboard:", error);
       }
     },
 
     destroy() {
-      if (this.pollInterval) {
-        clearInterval(this.pollInterval);
-        this.pollInterval = null;
-      }
       if (this.ws) {
         this.ws.disconnect();
         this.ws = null;
@@ -71,14 +65,24 @@ export function leaderboard({ roomId = '' } = {}) {
     },
 
     getRankEmoji(rank: number): string {
-      if (rank === 1) return '🥇';
-      if (rank === 2) return '🥈';
-      if (rank === 3) return '🥉';
-      return '🏅';
+      // No scores yet
+      if (!this.hasAnyScore) {
+        return "🐍";
+      }
+
+      // With scores: show medals or default
+      if (rank === 1) return "🥇";
+      if (rank === 2) return "🥈";
+      if (rank === 3) return "🥉";
+      return "🐍";
     },
 
     get isEmpty(): boolean {
       return this.leaderboard.length === 0;
-    }
+    },
+
+    get hasAnyScore(): boolean {
+      return this.leaderboard.some((participant) => participant.score > 0);
+    },
   };
 }

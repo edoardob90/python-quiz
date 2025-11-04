@@ -118,7 +118,7 @@ uv run uvicorn main:app --reload</pre>
 
             // Redirect to the room page with the quizId query parameter
             console.log(
-                `Redirecting to /room/${data.room_id}/host with quizId=${quizId}`,
+                `Redirecting to /room/${data.room_id}/host (${quizId})`,
             );
             window.location.href = `/room/${data.room_id}/host?quiz_id=${quizId}`;
         } catch (error) {

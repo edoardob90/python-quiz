@@ -19,7 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from models import (
     Answer,
     JoinRoomRequest,
-    LeaderboardEntry,
+    Leaderboard,
     LeaderboardResponse,
     NextQuestionRequest,
     Participant,
@@ -28,7 +28,13 @@ from models import (
     SubmitAnswerRequest,
 )
 from scoring import calculate_score
-from storage import active_question_answers, answers, participants, rooms
+from storage import (
+    active_question_answers,
+    answers,
+    cached_leaderboards,
+    participants,
+    rooms,
+)
 from validation import validate_answer
 
 # Setup logger
@@ -155,6 +161,19 @@ async def join_room(room_id: str, request: JoinRoomRequest):
         },
     )
 
+    # Update leaderboard with new participant
+    leaderboard = cached_leaderboards.setdefault(room_id, Leaderboard(room_id=room_id))
+    leaderboard.add_participant(participant)
+
+    # Broadcast updated leaderboard
+    await broadcast_to_room(
+        room_id,
+        {
+            "type": "leaderboard_updated",
+            "leaderboard": [entry.model_dump() for entry in leaderboard.entries],
+        },
+    )
+
     return {"participant_id": participant_id, "quiz_id": rooms[room_id].quiz_id}
 
 
@@ -257,10 +276,15 @@ async def next_question(room_id: str, request: NextQuestionRequest):
             room_id,
             {"type": "question_changed", "question_index": room.current_question},
         )
-        return {"status": "advanced", "current_question": room.current_question}
+        status = "advanced"
     else:
         await broadcast_to_room(room_id, {"type": "quiz_complete"})
-        return {"status": "complete", "current_question": room.current_question}
+        status = "complete"
+
+    # Broadcast leaderboard update
+    await broadcast_leaderboard(room_id)
+
+    return {"status": status, "current_question": room.current_question}
 
 
 @app.post("/api/rooms/{room_id}/answer")
@@ -322,9 +346,6 @@ async def submit_answer(room_id: str, request: SubmitAnswerRequest):
         answers[room_id] = []
     answers[room_id].append(answer_obj)
 
-    # Broadcast updated leaderboard
-    await broadcast_leaderboard(room_id)
-
     return {
         "is_correct": is_correct,
         "points_earned": points,
@@ -338,27 +359,38 @@ async def get_leaderboard(room_id: str) -> LeaderboardResponse:
     """
     Get current leaderboard for a room.
 
-    Returns participants sorted by score (descending).
+    This endpoint retrieves the live leaderboard showing all participants
+    ranked by their current scores. The leaderboard is cached for performance
+    and automatically updates as participants answer questions.
+
+    Args:
+        room_id: The unique identifier for the quiz room
+
+    Returns:
+        LeaderboardResponse: Leaderboard with participants sorted by score (descending),
+                           including nickname, score, streak, and rank for each participant
+
+    Raises:
+        HTTPException: 404 if the room is not found
     """
     if room_id not in rooms:
         raise HTTPException(status_code=404, detail="Room not found")
 
+    # Return a cached leaderboard, if it exists
+    if room_id in cached_leaderboards:
+        return cached_leaderboards[room_id].to_response()
+
+    # Create the initial leaderboard with all participants and defaul scores (zero)
     room = rooms[room_id]
+    leaderboard = Leaderboard(room_id=room_id)
 
-    # Retrieve the participants and sort them by score (descending)
-    participants_list = sorted(
-        (participants[pid] for pid in room.participant_ids if pid in participants),
-        key=lambda p: p.score,
-        reverse=True,
-    )
+    for pid in room.participant_ids:
+        if pid in participants:
+            leaderboard.add_participant(participants[pid])
 
-    # Return a ranked leaderboard
-    return LeaderboardResponse(
-        leaderboard=[
-            LeaderboardEntry.from_participant(p, rank=i + 1)
-            for i, p in enumerate(participants_list)
-        ]
-    )
+    cached_leaderboards[room_id] = leaderboard
+
+    return leaderboard.to_response()
 
 
 # === WebSocket Endpoints ===
@@ -430,16 +462,33 @@ async def broadcast_to_room(room_id: str, message: dict[str, Any]) -> None:
 
 
 async def broadcast_leaderboard(room_id: str):
-    """Broadcast updated leaderboard to all participants."""
-    leaderboard_data = await get_leaderboard(room_id)
+    """
+    Broadcast updated leaderboard to all participants in a room.
+
+    This function recalculates the current leaderboard standings for a room
+    and broadcasts the updated rankings to all connected clients via WebSocket.
+    The leaderboard is sorted by score in descending order.
+
+    Args:
+        room_id: The unique identifier for the quiz room
+
+    Returns:
+        None
+    """
+    # Return if no leaderboard if found (it should never be the case)
+    if room_id not in cached_leaderboards:
+        logging.warning(f"No leaderboard found for room {room_id}")
+        return
+
+    room = rooms[room_id]
+    leaderboard = cached_leaderboards[room_id]
+    leaderboard.recalculate(participants, room)
 
     await broadcast_to_room(
         room_id,
         {
             "type": "leaderboard_updated",
-            "leaderboard": [
-                entry.model_dump() for entry in leaderboard_data.leaderboard
-            ],
+            "leaderboard": [entry.model_dump() for entry in leaderboard.entries],
         },
     )
 
@@ -468,6 +517,9 @@ async def schedule_timeout_broadcast(
             "correct_answer": correct_answer,
         },
     )
+
+    # Broadcast updated leaderboard
+    await broadcast_leaderboard(room_id)
 
 
 if __name__ == "__main__":
