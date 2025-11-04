@@ -162,7 +162,7 @@ const BACKEND_API =
 
             // Redirect to play page for a given quiz ID
             console.log(
-                `Redirecting to /room/${roomCode}/play for quizId=${data.quiz_id}`,
+                `Redirecting to /room/${roomCode}/play (${data.quiz_id})`,
             );
             window.location.href = `/room/${roomCode}/play?quiz_id=${data.quiz_id}`;
         } catch (error) {
