@@ -202,7 +202,10 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
     },
 
     get canSubmit(): boolean {
-      return !this.hasAnswered && this.selectedAnswer.length > 0;
+      return (
+        !(this.hasAnswered || this.hasTimedOut) &&
+        this.selectedAnswer.length > 0
+      );
     },
 
     get isMultipleChoice(): boolean {
