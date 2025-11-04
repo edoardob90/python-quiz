@@ -155,6 +155,9 @@ async def join_room(room_id: str, request: JoinRoomRequest):
         },
     )
 
+    # Broadcast leaderboard update
+    await broadcast_leaderboard(room_id)
+
     return {"participant_id": participant_id, "quiz_id": rooms[room_id].quiz_id}
 
 
@@ -257,10 +260,15 @@ async def next_question(room_id: str, request: NextQuestionRequest):
             room_id,
             {"type": "question_changed", "question_index": room.current_question},
         )
-        return {"status": "advanced", "current_question": room.current_question}
+        status = "advanced"
     else:
         await broadcast_to_room(room_id, {"type": "quiz_complete"})
-        return {"status": "complete", "current_question": room.current_question}
+        status = "complete"
+
+    # Broadcast leaderboard update
+    await broadcast_leaderboard(room_id)
+
+    return {"status": status, "current_question": room.current_question}
 
 
 @app.post("/api/rooms/{room_id}/answer")
@@ -321,9 +329,6 @@ async def submit_answer(room_id: str, request: SubmitAnswerRequest):
     if room_id not in answers:
         answers[room_id] = []
     answers[room_id].append(answer_obj)
-
-    # Broadcast updated leaderboard
-    await broadcast_leaderboard(room_id)
 
     return {
         "is_correct": is_correct,
@@ -468,6 +473,9 @@ async def schedule_timeout_broadcast(
             "correct_answer": correct_answer,
         },
     )
+
+    # Broadcast updated leaderboard
+    await broadcast_leaderboard(room_id)
 
 
 if __name__ == "__main__":
