@@ -44,6 +44,8 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
     hasTimedOut: false,
     correctAnswer: [] as string[],
     timeLeft: 0,
+    focusedOptionIndex: 0, // Tracks keyboard-navigated option
+    keydownHandler: null as ((e: KeyboardEvent) => void) | null, // Store handler for cleanup
     $el: null as any, // Alpine.js magic property
 
     init() {
@@ -150,6 +152,47 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
       window.addEventListener("timer-update", (e: any) => {
         this.timeLeft = e.detail.timeLeft;
       });
+
+      // Create keyboard handler for cleanup
+      this.keydownHandler = (e: KeyboardEvent) => {
+        if (e.key === "Enter" && this.canSubmit) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          this.handleSubmit(false);
+          return;
+        }
+
+        // Listen for arrow keys to navigate multiple-choice options
+        if (
+          this.isMultipleChoice &&
+          !this.hasAnswered &&
+          !this.waitingForHost &&
+          this.currentQuestion?.options
+        ) {
+          const optionsCount = this.currentQuestion.options.length;
+
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            // Circular navigation: wrap to first when at last
+            this.focusedOptionIndex =
+              (this.focusedOptionIndex + 1) % optionsCount;
+            this.selectedAnswer =
+              this.currentQuestion.options[this.focusedOptionIndex];
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            // Circular navigation: wrap to last when at first
+            this.focusedOptionIndex =
+              (this.focusedOptionIndex - 1 + optionsCount) % optionsCount;
+            this.selectedAnswer =
+              this.currentQuestion.options[this.focusedOptionIndex];
+          }
+        }
+      };
+
+      // Listen for Enter key to submit and arrow keys to navigate
+      window.addEventListener("keydown", this.keydownHandler);
     },
 
     resetAnswer() {
@@ -160,6 +203,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
       this.startTime = Date.now();
       this.hasTimedOut = false;
       this.correctAnswer = [];
+      this.focusedOptionIndex = 0;
     },
 
     async handleSubmit(isTimeout = false) {
@@ -214,6 +258,17 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
 
     get isShortAnswer(): boolean {
       return this.currentQuestion?.type === "short-answer";
+    },
+
+    destroy() {
+      // Cleanup event listeners to prevent memory leaks
+      if (this.keydownHandler) {
+        window.removeEventListener("keydown", this.keydownHandler);
+      }
+      // Disconnect WebSocket
+      if (this.ws) {
+        this.ws.disconnect();
+      }
     },
   };
 }
