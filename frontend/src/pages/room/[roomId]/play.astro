@@ -7,10 +7,11 @@
  */
 
 import { getCollection } from "astro:content";
+import { getQuizName } from "../../../utils/quizUtils";
 import Layout from "../../../layouts/Layout.astro";
 import QuizPlayer from "../../../components/QuizPlayer.astro";
 import Timer from "../../../components/Timer.astro";
-import { getQuizName } from "../../../utils/quizUtils";
+import Instructions from "../../../components/Instructions.astro";
 
 // Get the room ID from the URL
 const { roomId } = Astro.params;
@@ -50,7 +51,7 @@ const quizName = getQuizName(quizId, questions);
         <!-- Missing Participant ID Warning -->
         <div
             id="no-participant-warning"
-            class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            class="hidden fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50"
         >
             <div class="bg-white rounded-lg shadow-xl p-8 max-w-md">
                 <div class="text-4xl mb-4 text-center">⚠️</div>
@@ -108,19 +109,7 @@ const quizName = getQuizName(quizId, questions);
                 </div>
             </div>
 
-            <!-- Instructions -->
-            <div class="mt-8 p-6 bg-purple-50 rounded-lg">
-                <h3 class="text-xl font-semibold mb-4">How to Play</h3>
-                <ul class="list-disc list-inside space-y-2 text-gray-700">
-                    <li>Wait for the host to start each question</li>
-                    <li>Answer as quickly as possible for more points</li>
-                    <li>
-                        Build a streak by answering correctly multiple times in
-                        a row
-                    </li>
-                    <li>Watch your position on the leaderboard!</li>
-                </ul>
-            </div>
+            <Instructions roomId={roomId} />
         </div>
     </div>
 </Layout>
