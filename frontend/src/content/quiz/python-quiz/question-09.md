@@ -1,5 +1,5 @@
 ---
-quizName: "More Python Quiz"
+quizName: "Python Quiz"
 type: "multiple-choice"
 timeLimit: 30
 points: 1250

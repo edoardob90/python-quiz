@@ -1,5 +1,5 @@
 ---
-quizName: "More Python Quiz"
+quizName: "Python Quiz"
 type: "multiple-choice"
 timeLimit: 15
 points: 750
@@ -12,4 +12,11 @@ options: [
 ]
 ---
 
-Given the function definition `def greet(name, greeting="Hello")`, which of the following function calls is **INVALID**?
+Given the following function definition
+
+```python
+def greet(name, greeting="Hello"):
+    return f"{greeting}, {name}!"
+```
+
+Which of the following function calls is **INVALID**?
