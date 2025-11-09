@@ -63,13 +63,14 @@ const { roomId, sortedQuestions, questionsData } = Astro.props;
                         :key="idx"
                     >
                         <button
-                            @click="selectedAnswer = option"
+                            @click="selectedAnswer = option; focusedOptionIndex = idx"
                             :disabled="hasAnswered || hasTimedOut"
                             :class="{
               'border-purple-600 bg-purple-50': selectedAnswer === option && !hasTimedOut,
               'border-green-500 bg-green-50 ring-2 ring-green-300': hasTimedOut && correctAnswer.includes(option),
               'border-red-500 bg-red-50': hasTimedOut && selectedAnswer === option && !correctAnswer.includes(option),
               'border-gray-200 hover:border-gray-300': selectedAnswer !== option && !hasTimedOut,
+              'ring-2 ring-purple-300': focusedOptionIndex === idx && !hasTimedOut,
               'opacity-60 cursor-not-allowed': hasAnswered,
               'cursor-pointer': !hasAnswered
             }"
@@ -93,6 +94,7 @@ const { roomId, sortedQuestions, questionsData } = Astro.props;
                     type="text"
                     x-model="selectedAnswer"
                     :disabled="hasAnswered"
+                    @keydown.enter="canSubmit && handleSubmit(false)"
                     class="w-full p-4 border-2 border-gray-200 rounded-lg focus:border-purple-600 focus:outline-none disabled:opacity-60"
                     placeholder="Type your answer..."
                 />
