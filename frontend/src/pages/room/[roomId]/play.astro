@@ -20,7 +20,7 @@ if (!roomId) {
 }
 
 // Get the quiz ID from the URL query parameter
-const quizId = Astro.url.searchParams.get("quiz_id");
+const quizId = Astro.url.searchParams.get("quiz");
 if (!quizId) {
     return Astro.redirect("/?error=no-quiz");
 }
@@ -109,7 +109,19 @@ const quizName = getQuizName(quizId, questions);
                 </div>
             </div>
 
-            <Instructions roomId={roomId} />
+            <!-- Instructions -->
+            <div class="mt-8 p-6 bg-purple-50 rounded-lg">
+                <h3 class="text-xl font-semibold mb-4">How to Play</h3>
+                <ul class="list-disc list-inside space-y-2 text-gray-700">
+                    <li>Wait for the host to start each question</li>
+                    <li>Answer as quickly as possible for more points</li>
+                    <li
+                        set:html={`Build a streak by answering correctly multiple times in
+                    a row`}
+                    />
+                    <li>Watch your position on the leaderboard!</li>
+                </ul>
+            </div>
         </div>
     </div>
 </Layout>

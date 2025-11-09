@@ -1,0 +1,51 @@
+---
+interface Props {
+    roomId: string;
+}
+
+const { roomId } = Astro.props;
+---
+
+<astro-copy-button data-room-id={roomId}>
+    <button
+        id="copy-button"
+        type="button"
+        title="Click to copy"
+        class="text-4xl font-bold text-blue-900 tracking-wider hover:text-blue-600 transition-colors cursor-pointer"
+    >
+        {roomId}
+    </button>
+    <p id="copy-feedback" class="text-green-600 text-sm mt-2 hidden">
+        ✅ Copied to clipboard!
+    </p>
+</astro-copy-button>
+
+<script>
+    class AstroCopyButton extends HTMLElement {
+        connectedCallback() {
+            const button = this.querySelector("#copy-button");
+            button?.addEventListener("click", async () => {
+                try {
+                    const roomId = this.dataset.roomId;
+                    if (!roomId) throw new Error("Room ID is missing");
+
+                    // Copy the room ID to the clipboard
+                    await navigator.clipboard.writeText(roomId);
+
+                    // Show feedback
+                    const feedback = this.querySelector("#copy-feedback");
+                    feedback?.classList.remove("hidden");
+
+                    // Hide feedback after 2s
+                    setTimeout(() => {
+                        feedback?.classList.add("hidden");
+                    }, 2000);
+                } catch (error) {
+                    console.error("Failed to copy to clipboard:", error);
+                    alert("Failed to copy to clipboard. Please try again.");
+                }
+            });
+        }
+    }
+    customElements.define("astro-copy-button", AstroCopyButton);
+</script>

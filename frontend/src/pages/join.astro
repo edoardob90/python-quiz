@@ -9,6 +9,9 @@ import Layout from "../layouts/Layout.astro";
 
 const BACKEND_API =
     import.meta.env.PUBLIC_BACKEND_API || "http://localhost:8000";
+
+// Retrieve the room code from the query params
+const roomCode = Astro.url.searchParams.get("code")?.toUpperCase();
 ---
 
 <Layout title="Join Quiz">
@@ -37,10 +40,11 @@ const BACKEND_API =
                             type="text"
                             id="room-code"
                             name="room-code"
+                            value={roomCode ?? ""}
                             required
-                            placeholder="e.g., ABC123"
+                            placeholder="ABCD1234"
                             class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent uppercase"
-                            maxlength="20"
+                            maxlength="10"
                         />
                     </div>
 
@@ -56,7 +60,7 @@ const BACKEND_API =
                             id="nickname"
                             name="nickname"
                             required
-                            placeholder="e.g., CodeNinja"
+                            placeholder="PythonPadawan"
                             class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                             maxlength="20"
                         />
@@ -164,7 +168,7 @@ const BACKEND_API =
             console.log(
                 `Redirecting to /room/${roomCode}/play (${data.quiz_id})`,
             );
-            window.location.href = `/room/${roomCode}/play?quiz_id=${data.quiz_id}`;
+            window.location.href = `/room/${roomCode}/play?quiz=${data.quiz_id}`;
         } catch (error) {
             console.error("Failed to join room:", error);
             showError(error.message);
