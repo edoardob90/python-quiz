@@ -168,7 +168,7 @@ const roomCode = Astro.url.searchParams.get("code")?.toUpperCase();
             console.log(
                 `Redirecting to /room/${roomCode}/play (${data.quiz_id})`,
             );
-            window.location.href = `/room/${roomCode}/play?quiz_id=${data.quiz_id}`;
+            window.location.href = `/room/${roomCode}/play?quiz=${data.quiz_id}`;
         } catch (error) {
             console.error("Failed to join room:", error);
             showError(error.message);

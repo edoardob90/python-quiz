@@ -22,7 +22,7 @@ if (!roomId) {
 }
 
 // Get the quiz ID from the URL query parameter
-const quizId = Astro.url.searchParams.get("quiz_id");
+const quizId = Astro.url.searchParams.get("quiz");
 if (!quizId) {
     return Astro.redirect("/?error=no-quiz");
 }
@@ -106,7 +106,7 @@ const quizName = getQuizName(quizId, questions);
                     >
                 </p>
                 <a
-                    href={`/room/${roomId}/qr`}
+                    href={`/room/${roomId}/qr?quizName=${quizName}`}
                     target="_blank"
                     class="inline-block px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition font-semibold shadow-sm"
                 >
