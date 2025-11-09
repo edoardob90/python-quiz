@@ -100,11 +100,18 @@ const quizName = getQuizName(quizId, questions);
                         Room Code: {roomId}
                     </h2>
                 </div>
-                <p class="text-blue-700 text-sm">
+                <p class="text-blue-700 text-sm mb-3">
                     Share this code with participants so they can join at: <strong
                         >{Astro.url.origin}/join</strong
                     >
                 </p>
+                <a
+                    href={`/room/${roomId}/qr`}
+                    target="_blank"
+                    class="inline-block px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition font-semibold shadow-sm"
+                >
+                    📱 Show QR Code
+                </a>
             </div>
 
             <!-- Main Content Grid -->

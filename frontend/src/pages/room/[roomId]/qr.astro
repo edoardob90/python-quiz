@@ -1,0 +1,89 @@
+---
+/**
+ * QR Code Page - Display QR code for joining a quiz room
+ *
+ * Room-based routing: /room/ABC123/qr
+ * This page displays a QR code that participants can scan to join the room.
+ */
+
+import Layout from "../../../layouts/Layout.astro";
+
+// Get the room ID from the URL
+const { roomId } = Astro.params;
+
+if (!roomId) {
+    return Astro.redirect("/");
+}
+
+// Build the join URL
+const joinUrl = `${Astro.url.origin}/join?code=${roomId}`;
+---
+
+<Layout title={`Join Room: ${roomId}`}>
+    <div class="min-h-screen flex items-center justify-center p-8">
+        <div class="text-center">
+            <!-- Title -->
+            <h1 class="text-4xl font-bold text-gray-800 mb-8">
+                Scan to Join Quiz
+            </h1>
+
+            <!-- QR Code Container -->
+            <div class="bg-white rounded-2xl shadow-2xl p-8 mb-6 inline-block">
+                <div id="qrcode" class="flex items-center justify-center">
+                    <!-- QR code will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Room Code Display -->
+            <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 max-w-md mx-auto">
+                <p class="text-blue-700 text-sm font-semibold mb-2">
+                    Room Code
+                </p>
+                <p class="text-4xl font-bold text-blue-900 tracking-wider">
+                    {roomId}
+                </p>
+                <p class="text-blue-600 text-sm mt-3">
+                    Or visit: <strong>{Astro.url.origin}/join</strong>
+                </p>
+            </div>
+
+            <!-- Footer Info -->
+            <p class="text-gray-500 text-sm mt-8">
+                Participants can scan this QR code or enter the room code manually
+            </p>
+        </div>
+    </div>
+</Layout>
+
+<script define:vars={{ joinUrl }}>
+    // Import QRCode library and generate QR code
+    import QRCode from "qrcode";
+
+    // Generate QR code when page loads
+    document.addEventListener("DOMContentLoaded", async () => {
+        try {
+            const qrcodeContainer = document.getElementById("qrcode");
+
+            // Generate QR code as canvas
+            const canvas = document.createElement("canvas");
+            await QRCode.toCanvas(canvas, joinUrl, {
+                width: 300,
+                margin: 2,
+                color: {
+                    dark: "#1e40af", // blue-800
+                    light: "#ffffff",
+                },
+            });
+
+            qrcodeContainer.appendChild(canvas);
+        } catch (error) {
+            console.error("Failed to generate QR code:", error);
+            document.getElementById("qrcode").innerHTML = `
+                <div class="text-red-600 p-4">
+                    <p class="font-semibold">Failed to generate QR code</p>
+                    <p class="text-sm">Please use the room code below to join</p>
+                </div>
+            `;
+        }
+    });
+</script>
