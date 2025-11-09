@@ -19,7 +19,7 @@ if (!roomId) {
 }
 
 // Get the quiz ID from the URL query parameter
-const quizId = Astro.url.searchParams.get("quiz_id");
+const quizId = Astro.url.searchParams.get("quiz");
 if (!quizId) {
     return Astro.redirect("/?error=no-quiz");
 }

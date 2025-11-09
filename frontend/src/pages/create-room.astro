@@ -120,7 +120,7 @@ uv run uvicorn main:app --reload</pre>
             console.log(
                 `Redirecting to /room/${data.room_id}/host (${quizId})`,
             );
-            window.location.href = `/room/${data.room_id}/host?quiz_id=${quizId}`;
+            window.location.href = `/room/${data.room_id}/host?quiz=${quizId}`;
         } catch (error) {
             console.error("Failed to create room:", error);
 

@@ -1,0 +1,110 @@
+---
+/**
+ * QR Code Page - Display QR code for joining a quiz room
+ *
+ * Room-based routing: /room/ABC123/qr
+ * This page displays a QR code that participants can scan to join the room.
+ */
+
+import Layout from "../../../layouts/Layout.astro";
+import CopyButton from "../../../components/CopyButton.astro";
+
+// Get the room ID from the URL
+const { roomId } = Astro.params;
+if (!roomId) {
+    return Astro.redirect("/");
+}
+
+// Get the quiz name
+const quizName = Astro.url.searchParams.get("quizName");
+---
+
+<Layout title={`Join Room: ${roomId}`}>
+    <div class="min-h-screen flex items-center justify-center p-8">
+        <div class="text-center">
+            <h1 class="text-4xl font-bold text-gray-800 mb-8">
+                {quizName ? `${quizName}` : "Quiz"}
+                <br />
+                <span class="text-2xl">Scan to Join</span>
+            </h1>
+
+            <div class="bg-white rounded-2xl shadow-2xl p-8 mb-6 inline-block">
+                <div id="qr-container" class="flex items-center justify-center">
+                    <p id="qr-loading" class="text-gray-500">
+                        Generating QR code...
+                    </p>
+                    <canvas id="qr-canvas" class="hidden"></canvas>
+                    <div id="qr-error" class="hidden text-red-600 p-4">
+                        <p class="font-semibold">Failed to generate QR code</p>
+                        <p class="text-sm">
+                            Please use the room code below to join
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 max-w-md mx-auto"
+            >
+                <p class="text-blue-700 text-sm font-semibold mb-2">
+                    Room Code<br />
+                    <span class="text-xs">(click the code to copy)</span>
+                </p>
+
+                <CopyButton roomId={roomId} />
+
+                <p class="text-blue-600 text-sm mt-3">
+                    Or visit <strong
+                        ><a href={`${Astro.url.origin}/join?code=${roomId}`}
+                            >this link</a
+                        ></strong
+                    >
+                </p>
+            </div>
+
+            <p class="text-gray-500 text-sm mt-8">
+                Participants can scan this QR code or enter the room code
+                manually
+            </p>
+        </div>
+    </div>
+</Layout>
+
+<script>
+    import QRCode from "qrcode";
+
+    // Generate QR code when page loads
+    document.addEventListener("DOMContentLoaded", async () => {
+        const canvas = document.getElementById(
+            "qr-canvas",
+        ) as HTMLCanvasElement;
+        const loading = document.getElementById("qr-loading");
+        const error = document.getElementById("qr-error");
+
+        try {
+            // Get room ID from URL path
+            const roomId = window.location.pathname.split("/")[2];
+            const joinUrl = `${window.location.origin}/join?code=${roomId}`;
+
+            // Generate QR code on canvas
+            await QRCode.toCanvas(canvas, joinUrl, {
+                width: 300,
+                margin: 2,
+                color: {
+                    dark: "#1e40af", // blue-800
+                    light: "#ffffff",
+                },
+            });
+
+            // Show canvas, hide loading
+            canvas.classList.remove("hidden");
+            loading?.classList.add("hidden");
+        } catch (err) {
+            console.error("Failed to generate QR code:", err);
+
+            // Show error, hide loading
+            error?.classList.remove("hidden");
+            loading?.classList.add("hidden");
+        }
+    });
+</script>
