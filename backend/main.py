@@ -14,6 +14,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 
 from models import (
@@ -193,7 +194,7 @@ async def get_room_state(room_id: str):
         {
             "id": pid,
             "nickname": participants[pid].nickname,
-            "joined_at": participants[pid].joined_at.isoformat(),
+            "joined_at": participants[pid].joined_at,
         }
         for pid in room.participant_ids
     ]
@@ -206,7 +207,7 @@ async def get_room_state(room_id: str):
         "question_order": room.question_order,
         "participants_ids": room.participant_ids,
         "participants": participants_list,
-        "created_at": room.created_at.isoformat(),
+        "created_at": room.created_at,
     }
 
 
@@ -249,9 +250,7 @@ async def start_question(room_id: str, request: StartQuestionRequest):
             "type": "question_started",
             "question_index": room.current_question,
             "time_limit": time_limit,
-            "ends_at": room.question_ends_at.isoformat()
-            if room.question_ends_at
-            else None,
+            "ends_at": room.question_ends_at,
         },
     )
 
@@ -449,7 +448,7 @@ async def broadcast_to_room(room_id: str, message: dict[str, Any]) -> None:
     disconnected = []
     for client in connected_clients[room_id]:
         try:
-            await client.send_json(message)
+            await client.send_json(jsonable_encoder(message))
         except Exception as e:
             # Client disconnected
             logger.error(
