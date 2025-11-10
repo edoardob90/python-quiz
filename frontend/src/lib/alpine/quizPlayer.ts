@@ -39,6 +39,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
     quizComplete: false,
     result: null as AnswerResult | null,
     pendingResult: null as AnswerResult | null,
+    pendingTimeoutData: null as any, // Store backend timeout until timer reaches 0
     startTime: Date.now(),
     ws: null as QuizWebSocket | null,
     hasTimedOut: false,
@@ -121,14 +122,14 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
 
         // Listen for question timeout event (reveals correct answer)
         this.ws.on("question_timeout", (data: any) => {
-          console.log("Question timeout received");
-          if (data.correct_answer) {
-            this.correctAnswer = data.correct_answer;
-            this.hasTimedOut = true;
-          }
-          // Reveal the correct answer now that time expired
-          if (this.pendingResult) {
-            this.result = this.pendingResult;
+          console.log("Question timeout received from backend");
+
+          // Store timeout data but don't reveal yet
+          this.pendingTimeoutData = data;
+
+          // If timer already reached 0, process immediately
+          if (this.timeLeft === 0) {
+            this.processTimeout();
           }
         });
 
@@ -141,11 +142,18 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
         });
       }
 
-      // Listen for timer timeout
-      window.addEventListener("timer-timeout", () => {
-        if (!this.waitingForHost) {
+      // Listen for timer reaching zero
+      window.addEventListener("timer-reached-zero", () => {
+        // Auto-submit if not answered
+        if (!this.waitingForHost && !this.hasAnswered) {
           this.handleSubmit(true);
         }
+
+        // If backend timeout already arrived, process it now
+        if (this.pendingTimeoutData) {
+          this.processTimeout();
+        }
+        // Otherwise, wait for backend event to arrive
       });
 
       // Listen for timer updates
@@ -195,10 +203,34 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
       window.addEventListener("keydown", this.keydownHandler);
     },
 
+    processTimeout() {
+      if (!this.pendingTimeoutData) return;
+
+      console.log("Processing timeout - revealing answer");
+
+      // Show "Time's up!" message
+      window.dispatchEvent(new CustomEvent("show-time-up"));
+
+      // Reveal correct answer
+      if (this.pendingTimeoutData.correct_answer) {
+        this.correctAnswer = this.pendingTimeoutData.correct_answer;
+        this.hasTimedOut = true;
+      }
+
+      // Reveal pending result if exists
+      if (this.pendingResult) {
+        this.result = this.pendingResult;
+      }
+
+      // Clear pending timeout data
+      this.pendingTimeoutData = null;
+    },
+
     resetAnswer() {
       this.hasAnswered = false;
       this.result = null;
       this.pendingResult = null;
+      this.pendingTimeoutData = null;
       this.selectedAnswer = "";
       this.startTime = Date.now();
       this.hasTimedOut = false;
