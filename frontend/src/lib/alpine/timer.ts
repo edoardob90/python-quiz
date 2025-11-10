@@ -47,6 +47,24 @@ export function timer({
         this.isStarted = false;
         this.quizComplete = true;
       });
+
+      // Listen for backend timeout confirmation (show "Time's up!" message)
+      window.addEventListener("show-time-up", () => {
+        // Stop the countdown timer if still running (edge case)
+        if (this.interval) {
+          clearInterval(this.interval);
+          this.interval = null;
+        }
+
+        this.isStarted = false;
+        this.showTimeUp = true;
+
+        // Transition from "Time's up" to "Waiting for next question" after 2 seconds
+        this.timeUpTimeout = window.setTimeout(() => {
+          this.showTimeUp = false;
+          this.waitingForNext = true;
+        }, this.timeUpDuration * 1000);
+      });
     },
 
     startTimer() {
@@ -65,14 +83,10 @@ export function timer({
           clearInterval(this.interval!);
           this.interval = null;
           this.isStarted = false;
-          this.showTimeUp = true;
-          // Dispatch timeout event
-          window.dispatchEvent(new CustomEvent("timer-timeout"));
-          // Transition from "Time's up" to "Waiting for next question"
-          this.timeUpTimeout = window.setTimeout(() => {
-            this.showTimeUp = false;
-            this.waitingForNext = true;
-          }, this.timeUpDuration * 1000);
+
+          // Notify that timer reached zero (don't show "Time's up" yet)
+          window.dispatchEvent(new CustomEvent("timer-reached-zero"));
+          // QuizPlayer will show "Time's up" when backend confirms timeout
         }
       }, 1000);
     },
