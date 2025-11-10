@@ -50,6 +50,15 @@ export function quizHost({
       // Read hostSecret from data attribute (client-side only)
       this.hostSecret = this.$el.dataset.hostSecret || "";
 
+      // Watch for currentQuestion changes and emit custom event
+      this.$watch("currentQuestion", (newValue) => {
+        window.dispatchEvent(
+          new CustomEvent("question-changed", {
+            detail: { questionIndex: newValue },
+          }),
+        );
+      });
+
       // Connect to WebSocket
       if (this.roomId) {
         this.ws = new QuizWebSocket(this.roomId);

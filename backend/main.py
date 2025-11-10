@@ -118,10 +118,15 @@ async def create_room(quiz_id: str, total_questions: int):
         created_at=datetime.now(),
         total_questions=total_questions,
     )
+    room.set_question_order()
 
     rooms[room_id] = room
 
-    return {"room_id": room_id, "host_secret": host_secret}
+    return {
+        "room_id": room_id,
+        "host_secret": host_secret,
+        "question_order": room.question_order,
+    }
 
 
 @app.post("/api/rooms/{room_id}/join")
@@ -198,6 +203,7 @@ async def get_room_state(room_id: str):
         "quiz_id": room.quiz_id,
         "status": room.status,
         "current_question": room.current_question,
+        "question_order": room.question_order,
         "participants_ids": room.participant_ids,
         "participants": participants_list,
         "created_at": room.created_at.isoformat(),
