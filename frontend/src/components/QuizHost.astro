@@ -133,10 +133,14 @@ const { roomId, totalQuestions, questionsData } = Astro.props;
                 <table class="w-full text-sm border-collapse">
                     <thead>
                         <tr class="border-b border-gray-200">
-                            <th class="text-left py-2 px-3 font-semibold text-gray-700 bg-gray-50">
+                            <th
+                                class="text-left py-2 px-3 font-semibold text-gray-700 bg-gray-50"
+                            >
                                 Nickname
                             </th>
-                            <th class="text-left py-2 px-3 font-semibold text-gray-700 bg-gray-50">
+                            <th
+                                class="text-left py-2 px-3 font-semibold text-gray-700 bg-gray-50"
+                            >
                                 Joined At
                             </th>
                         </tr>
@@ -146,10 +150,18 @@ const { roomId, totalQuestions, questionsData } = Astro.props;
                             x-for="(participant, idx) in participants"
                             :key="participant.id"
                         >
-                            <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                <td class="py-2 px-3" x-text="participant.nickname">
+                            <tr
+                                class="border-b border-gray-100 hover:bg-gray-50"
+                            >
+                                <td
+                                    class="py-2 px-3"
+                                    x-text="participant.nickname"
+                                >
                                 </td>
-                                <td class="py-2 px-3 text-gray-600 text-xs" x-text="new Date(participant.joinedAt).toLocaleTimeString()">
+                                <td
+                                    class="py-2 px-3 text-gray-600 text-xs"
+                                    x-text="new Date(participant.joined_at).toLocaleTimeString()"
+                                >
                                 </td>
                             </tr>
                         </template>
