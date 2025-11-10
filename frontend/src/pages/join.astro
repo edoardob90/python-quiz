@@ -155,10 +155,14 @@ const roomCode = Astro.url.searchParams.get("code")?.toUpperCase();
             const data = await response.json();
             console.log("Joined room:", data);
 
-            // Store participant ID in sessionStorage
+            // Store participant ID and nickname in sessionStorage
             sessionStorage.setItem(
                 `participant_id_${roomCode}`,
                 data.participant_id,
+            );
+            sessionStorage.setItem(
+                `participant_nickname_${roomCode}`,
+                nickname,
             );
 
             // Store the quiz ID in sessionStorage
