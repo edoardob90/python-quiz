@@ -4,7 +4,7 @@ type: "multiple-choice"
 timeLimit: 10
 points: 250
 correctAnswer: ["[1, 2, 3, 4]"]
-options: ["[1, 2, 3, 4]", "[1, 2, 3, [4]]", "[[1, 2, 3], 4]", "Error"]
+options: ["[1, 2, 3, 4]", "[1, 2, 3, [4]]", "[[1, 2, 3], 4]", "ValueError"]
 ---
 
 What is the output of this code?
