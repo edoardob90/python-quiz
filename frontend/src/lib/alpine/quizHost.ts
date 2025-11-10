@@ -21,7 +21,7 @@ interface QuestionData {
 interface Participant {
   id: string;
   nickname: string;
-  joinedAt: string;
+  joined_at: string;
 }
 
 export function quizHost({
@@ -29,10 +29,6 @@ export function quizHost({
   totalQuestions = 0,
   questionsData = [] as QuestionData[],
 } = {}) {
-  // TODO(human): Bug 2 - Change participants type to store objects
-  // Current: participants: [] as string[] (just IDs)
-  // Fix: participants: [] as Array<{ id: string; nickname: string }>
-  // Learning: TypeScript type for array of objects with id and nickname fields
   return {
     roomId,
     hostSecret: "", // Set via data attribute from sessionStorage
@@ -115,7 +111,7 @@ export function quizHost({
         this.currentQuestion = data.current_question || 0;
         this.participants = (data.participants || []).sort(
           (a: Participant, b: Participant) => {
-            new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime();
+            return new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime();
           },
         );
       } catch (error) {
