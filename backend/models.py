@@ -30,10 +30,11 @@ class Room(BaseModel):
     host_secret: str  # Authentication token for host
     total_questions: int = 0
     current_question: int = 0
-    status: RoomStatus = RoomStatus.WAITING  # waiting | active | paused | finished
+    question_order: list[int] = Field(default_factory=list)
+    status: RoomStatus = RoomStatus.WAITING
     question_started_at: datetime | None = None
     question_ends_at: datetime | None = None
-    participant_ids: list[str] = []
+    participant_ids: list[str] = Field(default_factory=list)
     created_at: datetime = datetime.now()
 
     def is_complete(self) -> bool:
@@ -87,6 +88,20 @@ class Room(BaseModel):
         self.status = RoomStatus.FINISHED
         self.question_started_at = None
         self.question_ends_at = None
+
+    def set_question_order(self) -> None:
+        """
+        Generate and store a randomized order for the questions in this room.
+        This ensures all participants in the same room will see questions in the same order.
+        """
+        import random
+
+        if self.question_order or self.total_questions == 0:
+            return
+
+        self.question_order = sorted(
+            range(self.total_questions), key=lambda _: random.random()
+        )
 
 
 class Participant(BaseModel):
