@@ -6,6 +6,7 @@
 
 import { QuizWebSocket } from "../websocket";
 import type { AlpineComponentType } from "./types";
+import { shuffleArray } from "../../utils/quizUtils";
 
 const BACKEND_API =
   import.meta.env.PUBLIC_BACKEND_API || "http://localhost:8000";
@@ -70,6 +71,16 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
           if (data.question_index !== undefined) {
             this.currentQuestion = data.question_index;
             this.currentQuestionData = this.questions[this.currentQuestion];
+
+            // Randomize options for a multiple-choice question
+            if (this.currentQuestionData.type === "multiple-choice") {
+              this.currentQuestionData = {
+                ...this.questions[this.currentQuestion],
+                options: this.questions[this.currentQuestion].options
+                  ? shuffleArray(this.questions[this.currentQuestion].options)
+                  : [],
+              };
+            }
           }
 
           this.waitingForHost = false;
