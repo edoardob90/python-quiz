@@ -13,9 +13,9 @@ interface QuestionData {
     index: number;
     type: string;
     options: string[];
-    timeLimit: number;
+    time_limit: number;
     points: number;
-    correctAnswer: string[];
+    correct_answer: string[];
 }
 
 interface Props {
@@ -53,7 +53,7 @@ const { roomId, totalQuestions, questionsData } = Astro.props;
         <!-- Start question button (idle) -->
         <button
             x-show="questionStatus === 'idle'"
-            @click="startQuestion(questionsData[currentQuestion].timeLimit || 10)"
+            @click="startQuestion(questionsData[currentQuestion].time_limit || 10)"
             class="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
         >
             Start Question

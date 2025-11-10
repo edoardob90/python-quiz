@@ -6,10 +6,12 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "check": "astro check",
     "astro": "astro"
   },
   "dependencies": {
     "@astrojs/alpinejs": "^0.4.9",
+    "@astrojs/check": "^0.9.5",
     "@astrojs/node": "^9.5.0",
     "@tailwindcss/vite": "^4.1.16",
     "@types/alpinejs": "^3.13.11",
@@ -17,7 +19,8 @@
     "astro": "^5.15.2",
     "astro-expressive-code": "^0.41.3",
     "qrcode": "^1.5.4",
-    "tailwindcss": "^4.1.16"
+    "tailwindcss": "^4.1.16",
+    "typescript": "^5.9.3"
   },
   "devDependencies": {
     "@types/qrcode": "^1.5.6"
