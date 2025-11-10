@@ -5,6 +5,7 @@
  */
 
 import { QuizWebSocket } from "../websocket";
+import type { AlpineComponentType } from "./types";
 
 const BACKEND_API =
   import.meta.env.PUBLIC_BACKEND_API || "http://localhost:8000";
@@ -13,15 +14,15 @@ interface QuestionData {
   index: number;
   type: string;
   options: string[];
-  timeLimit: number;
+  time_limit: number;
   points: number;
-  correctAnswer: string[];
+  correct_answer: string[];
 }
 
 interface Participant {
   id: string;
   nickname: string;
-  joinedAt: string;
+  joined_at: string;
 }
 
 export function quizHost({
@@ -29,11 +30,7 @@ export function quizHost({
   totalQuestions = 0,
   questionsData = [] as QuestionData[],
 } = {}) {
-  // TODO(human): Bug 2 - Change participants type to store objects
-  // Current: participants: [] as string[] (just IDs)
-  // Fix: participants: [] as Array<{ id: string; nickname: string }>
-  // Learning: TypeScript type for array of objects with id and nickname fields
-  return {
+  const component = {
     roomId,
     hostSecret: "", // Set via data attribute from sessionStorage
     totalQuestions,
@@ -44,14 +41,13 @@ export function quizHost({
     questionsData,
     hostTimeLeft: 0,
     hostTimerInterval: null as number | null,
-    $el: null as any, // Alpine.js magic property
 
-    async init() {
+    async init(this: any) {
       // Read hostSecret from data attribute (client-side only)
       this.hostSecret = this.$el.dataset.hostSecret || "";
 
       // Watch for currentQuestion changes and emit custom event
-      this.$watch("currentQuestion", (newValue) => {
+      this.$watch("currentQuestion", (newValue: number) => {
         window.dispatchEvent(
           new CustomEvent("question-changed", {
             detail: { questionIndex: newValue },
@@ -115,7 +111,7 @@ export function quizHost({
         this.currentQuestion = data.current_question || 0;
         this.participants = (data.participants || []).sort(
           (a: Participant, b: Participant) => {
-            new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime();
+            return new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime();
           },
         );
       } catch (error) {
@@ -145,7 +141,7 @@ export function quizHost({
             body: JSON.stringify({
               host_secret: this.hostSecret,
               time_limit: timeLimit,
-              correct_answer: currentQuestionData.correctAnswer,
+              correct_answer: currentQuestionData.correct_answer,
               question_index: this.currentQuestion,
             }),
           },
@@ -156,7 +152,7 @@ export function quizHost({
         this.questionStatus = "active";
 
         // Start host timer
-        this.hostTimeLeft = currentQuestionData.timeLimit;
+        this.hostTimeLeft = currentQuestionData.time_limit;
         this.hostTimerInterval = window.setInterval(() => {
           this.hostTimeLeft--;
           if (this.hostTimeLeft <= 0) {
@@ -167,7 +163,7 @@ export function quizHost({
 
         console.log(
           "Question started. Correct answer:",
-          currentQuestionData.correctAnswer,
+          currentQuestionData.correct_answer,
         );
       } catch (error) {
         console.error("Error starting question:", error);
@@ -225,4 +221,6 @@ export function quizHost({
       return this.participants.length;
     },
   };
+
+  return component as AlpineComponentType<typeof component>;
 }

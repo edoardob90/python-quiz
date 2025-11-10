@@ -5,6 +5,7 @@
  */
 
 import { QuizWebSocket } from "../websocket";
+import type { AlpineComponentType } from "./types";
 
 const BACKEND_API =
   import.meta.env.PUBLIC_BACKEND_API || "http://localhost:8000";
@@ -27,7 +28,7 @@ interface AnswerResult {
 }
 
 export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
-  return {
+  const component = {
     roomId,
     participantId: "", // Set via data attribute from sessionStorage
     questions,
@@ -47,9 +48,8 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
     timeLeft: 0,
     focusedOptionIndex: 0, // Tracks keyboard-navigated option
     keydownHandler: null as ((e: KeyboardEvent) => void) | null, // Store handler for cleanup
-    $el: null as any, // Alpine.js magic property
 
-    init() {
+    init(this: any) {
       // Read participantId from data attribute (client-side only)
       this.participantId = this.$el.dataset.participantId || "";
 
@@ -303,4 +303,6 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
       }
     },
   };
+
+  return component as AlpineComponentType<typeof component>;
 }
