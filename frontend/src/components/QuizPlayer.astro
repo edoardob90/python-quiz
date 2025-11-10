@@ -6,15 +6,16 @@
  * Uses the registered 'quizPlayer' Alpine component from alpine/quizPlayer.ts
  */
 
-import { render } from "astro:content";
+import type { CollectionEntry } from "astro:content";
+import Question from "./Question.astro";
 
 interface Props {
     roomId: string;
-    sortedQuestions: any[];
+    orderedQuestions: CollectionEntry<"quiz">[];
     questionsData: any[];
 }
 
-const { roomId, sortedQuestions, questionsData } = Astro.props;
+const { roomId, orderedQuestions, questionsData } = Astro.props;
 ---
 
 <div
@@ -29,22 +30,19 @@ const { roomId, sortedQuestions, questionsData } = Astro.props;
         <div class="bg-white rounded-lg shadow-lg p-6">
             <h2 class="text-xl font-semibold mb-4">
                 Question <span
-                    x-text="`${currentQuestionIndex + 1}/${questions.length}`"
+                    x-text="`${currentQuestion + 1}/${questions.length}`"
                     class="text-gray-500"></span>
             </h2>
 
             {
-                sortedQuestions.length > 0 ? (
-                    sortedQuestions.map(async (question, index) => {
-                        const { Content } = await render(question);
-                        return (
-                            <div x-show={`currentQuestionIndex === ${index}`}>
-                                <div class="text-lg mb-4">
-                                    <Content />
-                                </div>
-                            </div>
-                        );
-                    })
+                orderedQuestions.length > 0 ? (
+                    orderedQuestions.map((question, index) => (
+                        <Question
+                            question={question}
+                            questionIndex={index}
+                            mode="player"
+                        />
+                    ))
                 ) : (
                     <div class="text-gray-500">
                         There are no questions to display.
@@ -59,7 +57,7 @@ const { roomId, sortedQuestions, questionsData } = Astro.props;
             <template x-if="isMultipleChoice">
                 <div class="space-y-3">
                     <template
-                        x-for="(option, idx) in currentQuestion?.options"
+                        x-for="(option, idx) in currentQuestionData?.options"
                         :key="idx"
                     >
                         <button

@@ -31,8 +31,8 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
     roomId,
     participantId: "", // Set via data attribute from sessionStorage
     questions,
-    currentQuestionIndex: 0,
-    currentQuestion: null as Question | null,
+    currentQuestion: 0, // Index of current question (renamed from currentQuestionIndex for consistency)
+    currentQuestionData: null as Question | null, // The actual question object
     selectedAnswer: "",
     hasAnswered: false,
     waitingForHost: true,
@@ -54,7 +54,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
 
       // Set current question from questions array
       if (this.questions.length > 0) {
-        this.currentQuestion = this.questions[this.currentQuestionIndex];
+        this.currentQuestionData = this.questions[this.currentQuestion];
       }
 
       // Connect to WebSocket
@@ -67,8 +67,8 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
           console.log("Question started", data);
           // Update to the current question index from host
           if (data.question_index !== undefined) {
-            this.currentQuestionIndex = data.question_index;
-            this.currentQuestion = this.questions[this.currentQuestionIndex];
+            this.currentQuestion = data.question_index;
+            this.currentQuestionData = this.questions[this.currentQuestion];
           }
 
           this.waitingForHost = false;
@@ -76,7 +76,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
 
           // Start timer with time_limit from backend
           const timeLimit =
-            data.time_limit || this.currentQuestion?.time_limit || 30;
+            data.time_limit || this.currentQuestionData?.time_limit || 30;
           window.dispatchEvent(
             new CustomEvent("timer-start", {
               detail: { timeLimit },
@@ -87,7 +87,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
           window.dispatchEvent(
             new CustomEvent("question-changed-index", {
               detail: {
-                currentQuestionIndex: this.currentQuestionIndex,
+                currentQuestionIndex: this.currentQuestion,
                 totalQuestions: this.questions.length,
               },
             }),
@@ -98,8 +98,8 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
           console.log("Question changed", data);
           // Update to the new question index
           if (data.question_index !== undefined) {
-            this.currentQuestionIndex = data.question_index;
-            this.currentQuestion = this.questions[this.currentQuestionIndex];
+            this.currentQuestion = data.question_index;
+            this.currentQuestionData = this.questions[this.currentQuestion];
           }
 
           this.waitingForHost = true;
@@ -112,7 +112,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
           window.dispatchEvent(
             new CustomEvent("question-changed-index", {
               detail: {
-                currentQuestionIndex: this.currentQuestionIndex,
+                currentQuestionIndex: this.currentQuestion,
                 totalQuestions: this.questions.length,
               },
             }),
@@ -167,9 +167,9 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
           this.isMultipleChoice &&
           !this.hasAnswered &&
           !this.waitingForHost &&
-          this.currentQuestion?.options
+          this.currentQuestionData?.options
         ) {
-          const optionsCount = this.currentQuestion.options.length;
+          const optionsCount = this.currentQuestionData.options.length;
 
           if (e.key === "ArrowDown") {
             e.preventDefault();
@@ -178,7 +178,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
             this.focusedOptionIndex =
               (this.focusedOptionIndex + 1) % optionsCount;
             this.selectedAnswer =
-              this.currentQuestion.options[this.focusedOptionIndex];
+              this.currentQuestionData.options[this.focusedOptionIndex];
           } else if (e.key === "ArrowUp") {
             e.preventDefault();
             e.stopImmediatePropagation();
@@ -186,7 +186,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
             this.focusedOptionIndex =
               (this.focusedOptionIndex - 1 + optionsCount) % optionsCount;
             this.selectedAnswer =
-              this.currentQuestion.options[this.focusedOptionIndex];
+              this.currentQuestionData.options[this.focusedOptionIndex];
           }
         }
       };
@@ -207,7 +207,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
     },
 
     async handleSubmit(isTimeout = false) {
-      if (this.hasAnswered || !this.currentQuestion) return;
+      if (this.hasAnswered || !this.currentQuestionData) return;
 
       const answer = isTimeout ? "" : this.selectedAnswer;
       const responseTime = Date.now() - this.startTime;
@@ -222,11 +222,11 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
               participant_id: this.participantId,
               answer: answer,
               response_time: responseTime,
-              time_limit: this.currentQuestion.time_limit,
-              question_index: this.currentQuestion.index,
-              correct_answer: this.currentQuestion.correct_answer,
-              question_type: this.currentQuestion.type,
-              max_points: this.currentQuestion.points,
+              time_limit: this.currentQuestionData.time_limit,
+              question_index: this.currentQuestionData.index,
+              correct_answer: this.currentQuestionData.correct_answer,
+              question_type: this.currentQuestionData.type,
+              max_points: this.currentQuestionData.points,
             }),
           },
         );
@@ -253,11 +253,11 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
     },
 
     get isMultipleChoice(): boolean {
-      return this.currentQuestion?.type === "multiple-choice";
+      return this.currentQuestionData?.type === "multiple-choice";
     },
 
     get isShortAnswer(): boolean {
-      return this.currentQuestion?.type === "short-answer";
+      return this.currentQuestionData?.type === "short-answer";
     },
 
     destroy() {
