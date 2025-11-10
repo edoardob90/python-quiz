@@ -1,7 +1,7 @@
 ---
 quizName: "Python Quiz"
 type: "multiple-choice"
-timeLimit: 10
+timeLimit: 15
 points: 250
 correctAnswer: ["2, 5"]
 options: ["2, 5", "5, 5", "2, 2", "0, 0"]
@@ -18,7 +18,9 @@ class Counter:
 
 c1 = Counter()
 c2 = Counter()
+
 c1.instance_count = 2
 c2.instance_count = 5
+
 print(f"{c1.instance_count}, {c2.instance_count}")
 ```

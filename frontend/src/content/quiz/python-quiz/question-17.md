@@ -15,6 +15,9 @@ options: [
 What is the output of this code?
 
 ```python
-numbers = [x for x in range(10) if x % 2 == 0]
+numbers = []
+for x in range(10):
+    if x % 2 == 0:
+        numbers.append(x)
 print(numbers)
 ```

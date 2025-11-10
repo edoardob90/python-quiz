@@ -12,7 +12,7 @@ options: [
 ]
 ---
 
-What does the `@property` decorator do in a Python class?
+What does `@property` do in a Python class?
 
 ```python
 class Circle:

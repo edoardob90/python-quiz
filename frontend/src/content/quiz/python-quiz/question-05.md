@@ -2,7 +2,7 @@
 quizName: "Python Quiz"
 type: "multiple-choice"
 timeLimit: 15
-points: 750
+points: 500
 correctAnswer: ["greet(\"David\", name=\"Eve\")"]
 options: [
   "greet(\"Alice\")",

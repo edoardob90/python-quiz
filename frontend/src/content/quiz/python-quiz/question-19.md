@@ -7,7 +7,7 @@ correctAnswer: ["None"]
 options: ["None", "0", "False", "Empty string"]
 ---
 
-What does this function return?
+What does this function *return*?
 
 ```python
 def greet(name):

@@ -1,7 +1,7 @@
 ---
 quizName: "Python Quiz"
 type: "multiple-choice"
-timeLimit: 15
+timeLimit: 20
 points: 750
 correctAnswer: ["readline() returns one line, readlines() returns a list of all lines"]
 options: [

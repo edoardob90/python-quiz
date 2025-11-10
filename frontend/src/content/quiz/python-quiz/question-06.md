@@ -1,7 +1,7 @@
 ---
 quizName: "Python Quiz"
 type: "multiple-choice"
-timeLimit: 20
+timeLimit: 15
 points: 1000
 correctAnswer: ["Automatically closes the file even if an exception occurs"]
 options: [

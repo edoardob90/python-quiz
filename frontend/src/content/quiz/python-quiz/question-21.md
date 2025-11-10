@@ -15,7 +15,7 @@ options: [
 What is the **correct** way to write a docstring for a function in Python?
 
 ```python
+# Where should the docstring go?
 def calculate_area(radius):
-    # Where should the docstring go?
     return 3.14 * radius ** 2
 ```
