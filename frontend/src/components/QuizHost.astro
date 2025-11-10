@@ -130,18 +130,31 @@ const { roomId, totalQuestions, questionsData } = Astro.props;
             </template>
 
             <template x-if="participants.length > 0">
-                <ol class="list-decimal list-inside space-y-1">
-                    <template
-                        x-for="(participant, idx) in participants"
-                        :key="participant.id"
-                    >
-                        <li
-                            class="text-sm bg-gray-50 p-1 rounded"
-                            x-text="participant.nickname"
+                <table class="w-full text-sm border-collapse">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="text-left py-2 px-3 font-semibold text-gray-700 bg-gray-50">
+                                Nickname
+                            </th>
+                            <th class="text-left py-2 px-3 font-semibold text-gray-700 bg-gray-50">
+                                Joined At
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template
+                            x-for="(participant, idx) in participants"
+                            :key="participant.id"
                         >
-                        </li>
-                    </template>
-                </ol>
+                            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                <td class="py-2 px-3" x-text="participant.nickname">
+                                </td>
+                                <td class="py-2 px-3 text-gray-600 text-xs" x-text="new Date(participant.joinedAt).toLocaleTimeString()">
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
             </template>
         </div>
     </div>
