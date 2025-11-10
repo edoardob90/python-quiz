@@ -31,14 +31,15 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
     roomId,
     participantId: "", // Set via data attribute from sessionStorage
     questions,
-    currentQuestionIndex: 0,
-    currentQuestion: null as Question | null,
+    currentQuestion: 0, // Index of current question (renamed from currentQuestionIndex for consistency)
+    currentQuestionData: null as Question | null, // The actual question object
     selectedAnswer: "",
     hasAnswered: false,
     waitingForHost: true,
     quizComplete: false,
     result: null as AnswerResult | null,
     pendingResult: null as AnswerResult | null,
+    pendingTimeoutData: null as any, // Store backend timeout until timer reaches 0
     startTime: Date.now(),
     ws: null as QuizWebSocket | null,
     hasTimedOut: false,
@@ -54,7 +55,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
 
       // Set current question from questions array
       if (this.questions.length > 0) {
-        this.currentQuestion = this.questions[this.currentQuestionIndex];
+        this.currentQuestionData = this.questions[this.currentQuestion];
       }
 
       // Connect to WebSocket
@@ -67,8 +68,8 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
           console.log("Question started", data);
           // Update to the current question index from host
           if (data.question_index !== undefined) {
-            this.currentQuestionIndex = data.question_index;
-            this.currentQuestion = this.questions[this.currentQuestionIndex];
+            this.currentQuestion = data.question_index;
+            this.currentQuestionData = this.questions[this.currentQuestion];
           }
 
           this.waitingForHost = false;
@@ -76,7 +77,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
 
           // Start timer with time_limit from backend
           const timeLimit =
-            data.time_limit || this.currentQuestion?.time_limit || 30;
+            data.time_limit || this.currentQuestionData?.time_limit || 30;
           window.dispatchEvent(
             new CustomEvent("timer-start", {
               detail: { timeLimit },
@@ -87,7 +88,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
           window.dispatchEvent(
             new CustomEvent("question-changed-index", {
               detail: {
-                currentQuestionIndex: this.currentQuestionIndex,
+                currentQuestionIndex: this.currentQuestion,
                 totalQuestions: this.questions.length,
               },
             }),
@@ -98,8 +99,8 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
           console.log("Question changed", data);
           // Update to the new question index
           if (data.question_index !== undefined) {
-            this.currentQuestionIndex = data.question_index;
-            this.currentQuestion = this.questions[this.currentQuestionIndex];
+            this.currentQuestion = data.question_index;
+            this.currentQuestionData = this.questions[this.currentQuestion];
           }
 
           this.waitingForHost = true;
@@ -112,7 +113,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
           window.dispatchEvent(
             new CustomEvent("question-changed-index", {
               detail: {
-                currentQuestionIndex: this.currentQuestionIndex,
+                currentQuestionIndex: this.currentQuestion,
                 totalQuestions: this.questions.length,
               },
             }),
@@ -121,14 +122,14 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
 
         // Listen for question timeout event (reveals correct answer)
         this.ws.on("question_timeout", (data: any) => {
-          console.log("Question timeout received");
-          if (data.correct_answer) {
-            this.correctAnswer = data.correct_answer;
-            this.hasTimedOut = true;
-          }
-          // Reveal the correct answer now that time expired
-          if (this.pendingResult) {
-            this.result = this.pendingResult;
+          console.log("Question timeout received from backend");
+
+          // Store timeout data but don't reveal yet
+          this.pendingTimeoutData = data;
+
+          // If timer already reached 0, process immediately
+          if (this.timeLeft === 0) {
+            this.processTimeout();
           }
         });
 
@@ -141,11 +142,18 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
         });
       }
 
-      // Listen for timer timeout
-      window.addEventListener("timer-timeout", () => {
-        if (!this.waitingForHost) {
+      // Listen for timer reaching zero
+      window.addEventListener("timer-reached-zero", () => {
+        // Auto-submit if not answered
+        if (!this.waitingForHost && !this.hasAnswered) {
           this.handleSubmit(true);
         }
+
+        // If backend timeout already arrived, process it now
+        if (this.pendingTimeoutData) {
+          this.processTimeout();
+        }
+        // Otherwise, wait for backend event to arrive
       });
 
       // Listen for timer updates
@@ -167,9 +175,9 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
           this.isMultipleChoice &&
           !this.hasAnswered &&
           !this.waitingForHost &&
-          this.currentQuestion?.options
+          this.currentQuestionData?.options
         ) {
-          const optionsCount = this.currentQuestion.options.length;
+          const optionsCount = this.currentQuestionData.options.length;
 
           if (e.key === "ArrowDown") {
             e.preventDefault();
@@ -178,7 +186,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
             this.focusedOptionIndex =
               (this.focusedOptionIndex + 1) % optionsCount;
             this.selectedAnswer =
-              this.currentQuestion.options[this.focusedOptionIndex];
+              this.currentQuestionData.options[this.focusedOptionIndex];
           } else if (e.key === "ArrowUp") {
             e.preventDefault();
             e.stopImmediatePropagation();
@@ -186,7 +194,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
             this.focusedOptionIndex =
               (this.focusedOptionIndex - 1 + optionsCount) % optionsCount;
             this.selectedAnswer =
-              this.currentQuestion.options[this.focusedOptionIndex];
+              this.currentQuestionData.options[this.focusedOptionIndex];
           }
         }
       };
@@ -195,10 +203,34 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
       window.addEventListener("keydown", this.keydownHandler);
     },
 
+    processTimeout() {
+      if (!this.pendingTimeoutData) return;
+
+      console.log("Processing timeout - revealing answer");
+
+      // Show "Time's up!" message
+      window.dispatchEvent(new CustomEvent("show-time-up"));
+
+      // Reveal correct answer
+      if (this.pendingTimeoutData.correct_answer) {
+        this.correctAnswer = this.pendingTimeoutData.correct_answer;
+        this.hasTimedOut = true;
+      }
+
+      // Reveal pending result if exists
+      if (this.pendingResult) {
+        this.result = this.pendingResult;
+      }
+
+      // Clear pending timeout data
+      this.pendingTimeoutData = null;
+    },
+
     resetAnswer() {
       this.hasAnswered = false;
       this.result = null;
       this.pendingResult = null;
+      this.pendingTimeoutData = null;
       this.selectedAnswer = "";
       this.startTime = Date.now();
       this.hasTimedOut = false;
@@ -207,7 +239,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
     },
 
     async handleSubmit(isTimeout = false) {
-      if (this.hasAnswered || !this.currentQuestion) return;
+      if (this.hasAnswered || !this.currentQuestionData) return;
 
       const answer = isTimeout ? "" : this.selectedAnswer;
       const responseTime = Date.now() - this.startTime;
@@ -222,11 +254,11 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
               participant_id: this.participantId,
               answer: answer,
               response_time: responseTime,
-              time_limit: this.currentQuestion.time_limit,
-              question_index: this.currentQuestion.index,
-              correct_answer: this.currentQuestion.correct_answer,
-              question_type: this.currentQuestion.type,
-              max_points: this.currentQuestion.points,
+              time_limit: this.currentQuestionData.time_limit,
+              question_index: this.currentQuestionData.index,
+              correct_answer: this.currentQuestionData.correct_answer,
+              question_type: this.currentQuestionData.type,
+              max_points: this.currentQuestionData.points,
             }),
           },
         );
@@ -253,11 +285,11 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
     },
 
     get isMultipleChoice(): boolean {
-      return this.currentQuestion?.type === "multiple-choice";
+      return this.currentQuestionData?.type === "multiple-choice";
     },
 
     get isShortAnswer(): boolean {
-      return this.currentQuestion?.type === "short-answer";
+      return this.currentQuestionData?.type === "short-answer";
     },
 
     destroy() {

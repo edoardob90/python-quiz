@@ -28,11 +28,35 @@ if (!quizId) {
 const questions = await getCollection("quiz", ({ id }) =>
     id.startsWith(`${quizId}/`),
 );
-const sortedQuestions = questions.sort((a, b) => a.id.localeCompare(b.id));
+
+// Fetch question order from backend to apply randomization
+const BACKEND_API =
+    import.meta.env.PUBLIC_BACKEND_API || "http://localhost:8000";
+
+// Default to original (canonical) order
+let orderedQuestions = questions.sort((a, b) => a.id.localeCompare(b.id));
+
+try {
+    const roomResponse = await fetch(`${BACKEND_API}/api/rooms/${roomId}`);
+    if (roomResponse.ok) {
+        const roomData = await roomResponse.json();
+        const questionOrder = roomData.question_order || [];
+
+        // Reorder questions based on backend mapping
+        if (questionOrder.length > 0) {
+            orderedQuestions = questionOrder.map(
+                (idx: number) => questions[idx],
+            );
+        }
+    }
+} catch (error) {
+    console.error("Failed to fetch question order, using default:", error);
+}
 
 // Convert questions metadata to JSON-serializable format for Alpine.js
 // Use snake_case to match the Question interface in quizPlayer.ts
-const questionsData = sortedQuestions.map((q, index) => ({
+// Use orderedQuestions (randomized) instead of sortedQuestions
+const questionsData = orderedQuestions.map((q, index) => ({
     index,
     type: q.data.type,
     options: q.data.options || [],
@@ -102,7 +126,7 @@ const quizName = getQuizName(quizId, questions);
                 <div id="player-controls-container">
                     <QuizPlayer
                         roomId={roomId}
-                        sortedQuestions={sortedQuestions}
+                        orderedQuestions={orderedQuestions}
                         questionsData={questionsData}
                     />
                 </div>
