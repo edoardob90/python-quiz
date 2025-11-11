@@ -4,8 +4,8 @@
  * Controls quiz flow, manages participants, and broadcasts updates.
  */
 
-import { QuizWebSocket } from "../websocket";
-import type { AlpineComponentType } from "./types";
+import { QuizWebSocket } from "@lib/websocket";
+import type { AlpineComponentType } from "@lib/alpine/types";
 
 const BACKEND_API =
   import.meta.env.PUBLIC_BACKEND_API || "http://localhost:8000";

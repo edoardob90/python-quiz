@@ -7,11 +7,11 @@
  */
 
 import { getCollection } from "astro:content";
-import Layout from "../../../layouts/Layout.astro";
-import QuizHost from "../../../components/QuizHost.astro";
-import Leaderboard from "../../../components/Leaderboard.astro";
-import Question from "../../../components/Question.astro";
-import { getQuizName } from "../../../utils/quizUtils";
+import Layout from "@layouts/Layout.astro";
+import QuizHost from "@components/QuizHost.astro";
+import Leaderboard from "@components/Leaderboard.astro";
+import Question from "@components/Question.astro";
+import { getQuizName } from "@lib/utils";
 
 // Get the room ID from the URL
 const { roomId } = Astro.params;
@@ -72,7 +72,7 @@ const quizName = getQuizName(quizId, questions);
 ---
 
 <Layout title={`Host: ${quizName}`}>
-    <div class="bg-gray-100 min-h-screen">
+    <div class="bg-gray-100 min-h-screen" id="host-page" data-room-id={roomId}>
         <!-- Missing Host Secret Warning -->
         <div
             id="no-secret-warning"
@@ -241,42 +241,42 @@ const quizName = getQuizName(quizId, questions);
     </div>
 </Layout>
 
-<script is:inline define:vars={{ roomId }}>
-    // Check for host secret in sessionStorage
-    const hostSecret = sessionStorage.getItem(`host_secret_${roomId}`);
+<script>
+    import {
+        checkAuth,
+        showUnauthorizedModal,
+        injectAuthData,
+    } from "@lib/auth";
+    import {
+        setupQuestionChangeListener,
+        updateDebugSecret,
+    } from "@lib/alpine-helpers";
 
-    if (!hostSecret) {
-        // Show warning if no host secret found
-        console.error("No host secret found for this room");
-        document.getElementById("no-secret-warning").classList.remove("hidden");
+    // Get room ID from data attribute
+    const hostPage = document.getElementById("host-page");
+    const roomId = hostPage?.dataset.roomId;
+
+    if (!roomId) {
+        console.error("Room ID not found");
     } else {
-        // Update debug info
-        document.getElementById("debug-host-secret").textContent =
-            hostSecret.substring(0, 10) + "...";
+        // Check host authorization
+        const authResult = checkAuth(roomId, "host");
 
-        // Inject hostSecret into the QuizHost component via data attribute
-        const hostControlsContainer = document.getElementById(
-            "host-controls-container",
-        );
-        const quizHostElement =
-            hostControlsContainer.querySelector("[data-host-secret]");
+        if (!authResult.authorized) {
+            showUnauthorizedModal("host");
+        } else {
+            // Update debug info
+            updateDebugSecret("debug-host-secret", authResult.hostSecret);
 
-        if (quizHostElement) {
-            quizHostElement.setAttribute("data-host-secret", hostSecret);
+            // Inject hostSecret into the QuizHost component via data attribute
+            injectAuthData(
+                "host-controls-container",
+                "host-secret",
+                authResult.hostSecret
+            );
+
+            // Set up Alpine.js event listener for question changes
+            setupQuestionChangeListener("host-coordinator");
         }
-
-        // Event-driven sync: Listen for question changes from QuizHost component
-        document.addEventListener("alpine:initialized", () => {
-            const hostCoordinator = document.getElementById("host-coordinator");
-
-            // Listen for custom event emitted by QuizHost when currentQuestion changes
-            window.addEventListener("question-changed", (event) => {
-                const coordinatorData = Alpine.$data(hostCoordinator);
-                if (coordinatorData) {
-                    coordinatorData.currentQuestion =
-                        event.detail.questionIndex;
-                }
-            });
-        });
     }
 </script>

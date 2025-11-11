@@ -1,9 +1,9 @@
 ---
 // Landing Page - Quiz Launch
 
-import "../styles/global.css";
+import "@styles/global.css";
 import { getCollection } from "astro:content";
-import { getQuizName } from "../utils/quizUtils";
+import { getQuizName } from "@lib/utils";
 
 // Get all available quizzes
 const allQuestions = await getCollection("quiz");

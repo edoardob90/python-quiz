@@ -18,6 +18,15 @@ export default defineConfig({
   ],
   vite: {
     plugins: [tailwindcss()],
+    resolve: {
+      alias: {
+        '@components': '/src/components',
+        '@layouts': '/src/layouts',
+        '@lib': '/src/lib',
+        '@styles': '/src/styles',
+        '@content': '/src/content',
+      },
+    },
   },
   output: "server",
   adapter: node({
