@@ -5,7 +5,7 @@
  * and managing sessionStorage for host authentication.
  */
 
-import { setHostSecret, setQuizId } from "./session-storage";
+import { setHostSecret, setQuizId } from "@lib/session-storage";
 
 interface CreateRoomResponse {
   room_id: string;

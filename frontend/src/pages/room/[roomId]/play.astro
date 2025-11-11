@@ -7,10 +7,10 @@
  */
 
 import { getCollection } from "astro:content";
-import Layout from "../../../layouts/Layout.astro";
-import QuizPlayer from "../../../components/QuizPlayer.astro";
-import Timer from "../../../components/Timer.astro";
-import { getQuizName } from "../../../lib/utils";
+import Layout from "@layouts/Layout.astro";
+import QuizPlayer from "@components/QuizPlayer.astro";
+import Timer from "@components/Timer.astro";
+import { getQuizName } from "@lib/utils";
 
 // Get the room ID from the URL
 const { roomId } = Astro.params;
@@ -150,7 +150,7 @@ const quizName = getQuizName(quizId, questions);
 </Layout>
 
 <script>
-    import { checkAuth, showUnauthorizedModal, injectAuthData } from "../../../lib/auth";
+    import { checkAuth, showUnauthorizedModal, injectAuthData } from "@lib/auth";
 
     // Get room ID from data attribute
     const playPage = document.getElementById("play-page");

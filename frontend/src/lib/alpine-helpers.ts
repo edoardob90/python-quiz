@@ -36,7 +36,7 @@ export function setupQuestionChangeListener(coordinatorId: string): void {
     // Listen for custom event emitted by QuizHost when currentQuestion changes
     window.addEventListener("question-changed", (event: Event) => {
       const customEvent = event as CustomEvent<QuestionChangedEventDetail>;
-      const coordinatorData = window.Alpine.$data(coordinator);
+      const coordinatorData = window.Alpine.$data(coordinator) as any;
 
       if (coordinatorData) {
         coordinatorData.currentQuestion = customEvent.detail.questionIndex;

@@ -9,10 +9,10 @@
 
 import type { Alpine } from 'alpinejs'
 
-import { timer } from './timer';
-import { leaderboard } from './leaderboard';
-import { quizHost } from './quizHost';
-import { quizPlayer } from './quizPlayer';
+import { timer } from '@lib/alpine/timer';
+import { leaderboard } from '@lib/alpine/leaderboard';
+import { quizHost } from '@lib/alpine/quizHost';
+import { quizPlayer } from '@lib/alpine/quizPlayer';
 
 export default (Alpine: Alpine) => {
   // Register all components

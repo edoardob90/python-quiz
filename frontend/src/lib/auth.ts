@@ -5,7 +5,7 @@
  * Handles sessionStorage validation and modal display.
  */
 
-import { getHostSecret, getParticipantId, getParticipantNickname } from "./session-storage";
+import { getHostSecret, getParticipantId, getParticipantNickname } from "@lib/session-storage";
 
 type HostAuthResult =
   | { type: "host"; authorized: true; hostSecret: string }

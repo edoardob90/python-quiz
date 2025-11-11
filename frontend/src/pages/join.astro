@@ -5,10 +5,7 @@
  * Players enter room code and nickname to join a quiz.
  */
 
-import Layout from "../layouts/Layout.astro";
-
-const BACKEND_API =
-    import.meta.env.PUBLIC_BACKEND_API || "http://localhost:8000";
+import Layout from "@layouts/Layout.astro";
 
 // Retrieve the room code from the query params
 const roomCode = Astro.url.searchParams.get("code")?.toUpperCase();
@@ -109,7 +106,7 @@ const roomCode = Astro.url.searchParams.get("code")?.toUpperCase();
         setLoadingState,
         showError,
         hideError,
-    } from "../lib/join-room";
+    } from "@lib/join-room";
 
     const form = document.getElementById("join-form") as HTMLFormElement;
 

@@ -5,7 +5,7 @@
  * Manages form submission, validation, and sessionStorage.
  */
 
-import { setParticipantId, setParticipantNickname, setQuizId } from "./session-storage";
+import { setParticipantId, setParticipantNickname, setQuizId } from "@lib/session-storage";
 
 interface JoinRoomResponse {
   participant_id: string;

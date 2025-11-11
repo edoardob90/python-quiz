@@ -7,11 +7,11 @@
  */
 
 import { getCollection } from "astro:content";
-import Layout from "../../../layouts/Layout.astro";
-import QuizHost from "../../../components/QuizHost.astro";
-import Leaderboard from "../../../components/Leaderboard.astro";
-import Question from "../../../components/Question.astro";
-import { getQuizName } from "../../../lib/utils";
+import Layout from "@layouts/Layout.astro";
+import QuizHost from "@components/QuizHost.astro";
+import Leaderboard from "@components/Leaderboard.astro";
+import Question from "@components/Question.astro";
+import { getQuizName } from "@lib/utils";
 
 // Get the room ID from the URL
 const { roomId } = Astro.params;
@@ -246,11 +246,11 @@ const quizName = getQuizName(quizId, questions);
         checkAuth,
         showUnauthorizedModal,
         injectAuthData,
-    } from "../../../lib/auth";
+    } from "@lib/auth";
     import {
         setupQuestionChangeListener,
         updateDebugSecret,
-    } from "../../../lib/alpine-helpers";
+    } from "@lib/alpine-helpers";
 
     // Get room ID from data attribute
     const hostPage = document.getElementById("host-page");
