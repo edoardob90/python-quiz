@@ -10,7 +10,7 @@ import { glob } from "astro/loaders";
 
 const quizCollection = defineCollection({
   loader: glob({
-    pattern: ["**/*.md", "!**/_*.md"],
+    pattern: "**/question-+([0-9]).md",
     base: "./src/content/quiz",
   }),
   schema: z.object({
