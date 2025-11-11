@@ -6,7 +6,7 @@
 
 import { QuizWebSocket } from "@lib/websocket";
 import type { AlpineComponentType } from "@lib/alpine/types";
-import { shuffleArray } from "@lib/utils/quizUtils";
+import { shuffleArray } from "@lib/utils";
 
 const BACKEND_API =
   import.meta.env.PUBLIC_BACKEND_API || "http://localhost:8000";

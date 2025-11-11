@@ -172,12 +172,14 @@ const quizName = getQuizName(quizId, questions);
         } else {
             // Display participant's nickname in header
             const nicknameElement = document.getElementById("player-nickname");
-            if (authResult.nickname) {
-                nicknameElement.textContent = authResult.nickname;
-            } else {
-                // Fall back to anonymous if no nickname found
-                nicknameElement.textContent = "Anonymous";
-                nicknameElement?.classList.add("text-gray-400");
+            if (nicknameElement) {
+                if (authResult.nickname) {
+                    nicknameElement.textContent = authResult.nickname;
+                } else {
+                    // Fall back to anonymous if no nickname found
+                    nicknameElement.textContent = "Anonymous";
+                    nicknameElement.classList.add("text-gray-400");
+                }
             }
 
             // Inject participantId into the QuizPlayer component via data attribute
