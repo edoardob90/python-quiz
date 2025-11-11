@@ -102,83 +102,45 @@ const roomCode = Astro.url.searchParams.get("code")?.toUpperCase();
     </div>
 </Layout>
 
-<script is:inline define:vars={{ BACKEND_API }}>
-    const form = document.getElementById("join-form");
-    const errorMessage = document.getElementById("error-message");
-    const loading = document.getElementById("loading");
-    const submitButton = form.querySelector('button[type="submit"]');
+<script>
+    import {
+        joinRoom,
+        validateJoinForm,
+        setLoadingState,
+        showError,
+        hideError,
+    } from "../lib/join-room";
+
+    const form = document.getElementById("join-form") as HTMLFormElement;
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
         // Get form values
-        const roomCode = document
-            .getElementById("room-code")
-            .value.trim()
-            .toUpperCase();
-        const nickname = document.getElementById("nickname").value.trim();
+        const roomCodeInput = document.getElementById("room-code") as HTMLInputElement;
+        const nicknameInput = document.getElementById("nickname") as HTMLInputElement;
+
+        const roomCode = roomCodeInput.value.trim().toUpperCase();
+        const nickname = nicknameInput.value.trim();
 
         // Validation
-        if (!roomCode || !nickname) {
-            showError("Please fill in all fields");
+        const validationError = validateJoinForm(roomCode, nickname);
+        if (validationError) {
+            showError(validationError);
             return;
         }
 
         // Show loading state
-        loading.classList.remove("hidden");
-        errorMessage.classList.add("hidden");
-        submitButton.disabled = true;
+        setLoadingState(true);
+        hideError();
 
-        try {
-            console.log(`Joining room: ${roomCode} as ${nickname}`);
+        // Join room
+        const result = await joinRoom({ roomCode, nickname });
 
-            // Call backend API to join room
-            const response = await fetch(
-                `${BACKEND_API}/api/rooms/${roomCode}/join`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ nickname: nickname }),
-                },
-            );
-
-            if (!response.ok) {
-                if (response.status === 404) {
-                    throw new Error(
-                        `Room "${roomCode}" not found. Check the code with your host.`,
-                    );
-                }
-                const errorText = await response.text();
-                throw new Error(`Failed to join room: ${errorText}`);
-            }
-
-            const data = await response.json();
-            console.log("Joined room:", data);
-
-            // Store participant ID in sessionStorage
-            sessionStorage.setItem(
-                `participant_id_${roomCode}`,
-                data.participant_id,
-            );
-
-            // Store the quiz ID in sessionStorage
-            sessionStorage.setItem(`quiz_id_${roomCode}`, data.quiz_id);
-
-            // Redirect to play page for a given quiz ID
-            console.log(
-                `Redirecting to /room/${roomCode}/play (${data.quiz_id})`,
-            );
-            window.location.href = `/room/${roomCode}/play?quiz=${data.quiz_id}`;
-        } catch (error) {
-            console.error("Failed to join room:", error);
-            showError(error.message);
-            submitButton.disabled = false;
-            loading.classList.add("hidden");
+        if (!result.success && result.error) {
+            showError(result.error);
+            setLoadingState(false);
         }
+        // If success, the joinRoom function will redirect
     });
-
-    function showError(message) {
-        errorMessage.classList.remove("hidden");
-        errorMessage.querySelector("p").textContent = message;
-    }
 </script>

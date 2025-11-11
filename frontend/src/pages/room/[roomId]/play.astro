@@ -10,7 +10,7 @@ import { getCollection } from "astro:content";
 import Layout from "../../../layouts/Layout.astro";
 import QuizPlayer from "../../../components/QuizPlayer.astro";
 import Timer from "../../../components/Timer.astro";
-import { getQuizName } from "../../../utils/quizUtils";
+import { getQuizName } from "../../../lib/utils";
 
 // Get the room ID from the URL
 const { roomId } = Astro.params;
@@ -70,7 +70,7 @@ const quizName = getQuizName(quizId, questions);
 ---
 
 <Layout title={`Play: ${quizName}`}>
-    <div class="bg-gray-100 min-h-screen">
+    <div class="bg-gray-100 min-h-screen" id="play-page" data-room-id={roomId}>
         <!-- Missing Participant ID Warning -->
         <div
             id="no-participant-warning"
@@ -149,29 +149,27 @@ const quizName = getQuizName(quizId, questions);
     </div>
 </Layout>
 
-<script is:inline define:vars={{ roomId }}>
-    // Check for participant ID in sessionStorage
-    const participantId = sessionStorage.getItem(`participant_id_${roomId}`);
+<script>
+    import { checkAuth, showUnauthorizedModal, injectAuthData } from "../../../lib/auth";
 
-    if (!participantId) {
-        // Show warning if no participant ID found
-        console.error("No participant ID found for this room");
-        document
-            .getElementById("no-participant-warning")
-            .classList.remove("hidden");
+    // Get room ID from data attribute
+    const playPage = document.getElementById("play-page");
+    const roomId = playPage?.dataset.roomId;
+
+    if (!roomId) {
+        console.error("Room ID not found");
     } else {
-        // Inject participantId into the QuizPlayer component via data attribute
-        const playerContainer = document.getElementById(
-            "player-controls-container",
-        );
-        const quizPlayerElement = playerContainer.querySelector(
-            "[data-participant-id]",
-        );
+        // Check player authorization
+        const authResult = checkAuth(roomId, "player");
 
-        if (quizPlayerElement) {
-            quizPlayerElement.setAttribute(
-                "data-participant-id",
-                participantId,
+        if (!authResult.authorized) {
+            showUnauthorizedModal("player");
+        } else {
+            // Inject participantId into the QuizPlayer component via data attribute
+            injectAuthData(
+                "player-controls-container",
+                "participant-id",
+                authResult.participantId
             );
         }
     }

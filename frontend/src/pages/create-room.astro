@@ -26,7 +26,12 @@ const totalQuestions = questions.length;
 ---
 
 <Layout title="Creating Room...">
-    <div class="container mx-auto px-4 py-8">
+    <div
+        class="container mx-auto px-4 py-8"
+        id="create-room-container"
+        data-quiz-id={quizId}
+        data-total-questions={totalQuestions}
+    >
         <div class="max-w-md mx-auto">
             <!-- Loading State -->
             <div id="loading" class="text-center">
@@ -82,56 +87,22 @@ uv run uvicorn main:app --reload</pre>
     </div>
 </Layout>
 
-<script is:inline define:vars={{ BACKEND_API, quizId, totalQuestions }}>
-    // This runs when the page loads
-    async function createRoom() {
-        try {
-            console.log(`Creating room for quiz: ${quizId}`);
-            console.log(`Backend API: ${BACKEND_API}`);
+<script>
+    import { createRoom, showError } from "../lib/room-creation";
 
-            // Call backend API to create a room
-            const response = await fetch(
-                `${BACKEND_API}/api/rooms/create?quiz_id=${quizId}&total_questions=${totalQuestions}`,
-                {
-                    method: "POST",
-                },
-            );
+    // Get data from data-attributes
+    const container = document.getElementById("create-room-container");
+    const quizId = container?.dataset.quizId;
+    const totalQuestions = container?.dataset.totalQuestions;
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(
-                    `Backend returned ${response.status}: ${errorText}`,
-                );
-            }
-
-            const data = await response.json();
-            console.log("Room created:", data);
-
-            // Store the host secret in sessionStorage so the host page can use it
-            sessionStorage.setItem(
-                `host_secret_${data.room_id}`,
-                data.host_secret,
-            );
-
-            // Store the quizId in sessionStorage so that host and player's page can access it
-            sessionStorage.setItem(`quiz_id_${data.room_id}`, quizId);
-
-            // Redirect to the room page with the quizId query parameter
-            console.log(
-                `Redirecting to /room/${data.room_id}/host (${quizId})`,
-            );
-            window.location.href = `/room/${data.room_id}/host?quiz=${quizId}`;
-        } catch (error) {
-            console.error("Failed to create room:", error);
-
-            // Show error message
-            document.getElementById("loading").classList.add("hidden");
-            document.getElementById("error").classList.remove("hidden");
-            document.getElementById("error-message").textContent =
-                error.message;
-        }
+    if (quizId && totalQuestions) {
+        // Create room when page loads
+        createRoom({
+            quizId,
+            totalQuestions: parseInt(totalQuestions, 10),
+            onError: (error) => showError(error.message),
+        });
+    } else {
+        showError("Missing quiz configuration");
     }
-
-    // Create room when page loads
-    createRoom();
 </script>
