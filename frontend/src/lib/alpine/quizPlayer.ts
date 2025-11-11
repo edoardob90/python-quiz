@@ -4,9 +4,9 @@
  * Handles question display, answer submission, and score feedback.
  */
 
-import { QuizWebSocket } from "../websocket";
-import type { AlpineComponentType } from "./types";
-import { shuffleArray } from "../../utils/quizUtils";
+import { QuizWebSocket } from "@lib/websocket";
+import type { AlpineComponentType } from "@lib/alpine/types";
+import { shuffleArray } from "@lib/utils/quizUtils";
 
 const BACKEND_API =
   import.meta.env.PUBLIC_BACKEND_API || "http://localhost:8000";

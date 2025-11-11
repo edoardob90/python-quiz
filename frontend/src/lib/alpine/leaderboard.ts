@@ -4,7 +4,7 @@
  * Displays real-time leaderboard with polling and WebSocket updates.
  */
 
-import { QuizWebSocket } from "../websocket";
+import { QuizWebSocket } from "@lib/websocket";
 
 const BACKEND_API =
   import.meta.env.PUBLIC_BACKEND_API || "http://localhost:8000";
