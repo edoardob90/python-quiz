@@ -2,7 +2,7 @@
 quizName: "Python Quiz"
 type: "multiple-choice"
 timeLimit: 15
-points: 750
+points: 500
 correctAnswer: ["Public functions and classes that are intended for external use"]
 options: [
   "Public functions and classes that are intended for external use",

@@ -1,7 +1,7 @@
 ---
 quizName: "Python Quiz"
 type: "multiple-choice"
-timeLimit: 10
+timeLimit: 15
 points: 500
 correctAnswer: ["[1, 2, 3, 4, 5]"]
 options: ["[1, 2, 3, 4, 5]", "[1, [2, 3, 4], 5]", "[[2, 3, 4]]", "SyntaxError"]
