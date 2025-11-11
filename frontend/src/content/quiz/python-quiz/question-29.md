@@ -7,7 +7,7 @@ correctAnswer: ["It allows you to define a method that is accessed like an attri
 options: [
   "It allows you to define a method that is accessed like an attribute",
   "It makes an attribute private",
-  "It creates a static method",
+  "It converts a method into a class variable",
   "It makes the attribute immutable"
 ]
 ---
