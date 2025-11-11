@@ -4,8 +4,9 @@
  * Handles question display, answer submission, and score feedback.
  */
 
-import { QuizWebSocket } from "../websocket";
-import type { AlpineComponentType } from "./types";
+import { QuizWebSocket } from "@lib/websocket";
+import type { AlpineComponentType } from "@lib/alpine/types";
+import { shuffleArray } from "@lib/utils";
 
 const BACKEND_API =
   import.meta.env.PUBLIC_BACKEND_API || "http://localhost:8000";
@@ -70,6 +71,16 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
           if (data.question_index !== undefined) {
             this.currentQuestion = data.question_index;
             this.currentQuestionData = this.questions[this.currentQuestion];
+
+            // Randomize options for a multiple-choice question
+            if (this.currentQuestionData.type === "multiple-choice") {
+              this.currentQuestionData = {
+                ...this.questions[this.currentQuestion],
+                options: this.questions[this.currentQuestion].options
+                  ? shuffleArray(this.questions[this.currentQuestion].options)
+                  : [],
+              };
+            }
           }
 
           this.waitingForHost = false;

@@ -29,7 +29,7 @@ const { timeLimit, currentQuestionIndex = 0, totalQuestions = 1 } = Astro.props;
     <div class="text-4xl font-bold">
         <!-- Initial waiting before first question starts -->
         <template x-if="!(isStarted || waitingForNext || showTimeUp)">
-            <span class="text-gray-500">⏳ Waiting...</span>
+            <span class="text-gray-500 mb-3">⏳ Waiting...</span>
         </template>
 
         <!-- Active countdown -->
@@ -43,14 +43,14 @@ const { timeLimit, currentQuestionIndex = 0, totalQuestions = 1 } = Astro.props;
 
         <!-- Time's up message -->
         <template x-if="showTimeUp">
-            <span class="text-red-600"> ⏰ Time's up! </span>
+            <span class="text-red-600 mb-3"> ⏰ Time's up! </span>
         </template>
 
         <!-- Get ready for next question -->
         <template
             x-if="waitingForNext && !showTimeUp && (currentQuestionIndex < totalQuestions - 1)"
         >
-            <span class="text-blue-600">
+            <span class="text-blue-600 mb-3">
                 🎯 Get ready for question #<span
                     x-text="currentQuestionIndex + 2"></span>
             </span>
