@@ -1,46 +1,13 @@
 """Answer validation with fuzzy matching and semantic similarity for short-answer questions."""
 
 import logging
-from enum import Enum
 
+from numpy import argmax
 from rapidfuzz import fuzz
 
-from models import QuestionType
+from models import QuestionType, ValidationMethod, ValidationResult
 
 logger = logging.getLogger(__name__)
-
-
-class ValidationMethod(Enum):
-    """Validation methods for answer checking."""
-
-    FUZZY = "fuzzy"  # String similarity (rapidfuzz)
-    SEMANTIC = "semantic"  # Meaning similarity (embeddings)
-    HYBRID = "hybrid"  # Try fuzzy first, then semantic
-
-
-class ValidationResult:
-    """Result of answer validation with metadata."""
-
-    def __init__(
-        self,
-        is_correct: bool,
-        method_used: str,
-        confidence: float,
-        matched_answer: str | None = None,
-    ):
-        self.is_correct = is_correct
-        self.method_used = method_used
-        self.confidence = confidence
-        self.matched_answer = matched_answer
-
-    def to_dict(self) -> dict:
-        """Convert to dictionary for logging/response."""
-        return {
-            "is_correct": self.is_correct,
-            "method_used": self.method_used,
-            "confidence": self.confidence,
-            "matched_answer": self.matched_answer,
-        }
 
 
 def _fuzzy_match(
@@ -71,7 +38,7 @@ def _fuzzy_match(
     is_correct = best_score >= threshold
     return ValidationResult(
         is_correct=is_correct,
-        method_used="fuzzy",
+        method_used=ValidationMethod.FUZZY,
         confidence=best_score / 100.0,  # Normalize to 0-1
         matched_answer=best_match if is_correct else None,
     )
@@ -98,7 +65,7 @@ def _semantic_match(
         similarities = embedding_service.batch_similarity(user_answer, correct_answers)
 
         # Find best match
-        best_idx = max(range(len(similarities)), key=lambda i: similarities[i])
+        best_idx = argmax(similarities)
         best_score = similarities[best_idx]
         best_match = correct_answers[best_idx]
 
@@ -110,7 +77,7 @@ def _semantic_match(
 
         return ValidationResult(
             is_correct=is_correct,
-            method_used="semantic",
+            method_used=ValidationMethod.SEMANTIC,
             confidence=best_score,
             matched_answer=best_match if is_correct else None,
         )
@@ -165,7 +132,7 @@ def validate_answer(
         is_correct = user_answer in correct_answers
         return ValidationResult(
             is_correct=is_correct,
-            method_used="exact",
+            method_used=ValidationMethod.EXACT,
             confidence=1.0 if is_correct else 0.0,
             matched_answer=user_answer if is_correct else None,
         )
@@ -192,10 +159,11 @@ def validate_answer(
                 return semantic_result
 
             # Return whichever had higher confidence
-            if semantic_result.confidence > fuzzy_result.confidence:
-                return semantic_result
-            return fuzzy_result
+            return (
+                fuzzy_result
+                if fuzzy_result.confidence > semantic_result.confidence
+                else semantic_result
+            )
 
-        case _:
-            logger.warning(f"Unknown validation method: {validation_method}")
-            return _fuzzy_match(user_answer, correct_answers, fuzzy_threshold)
+        case ValidationMethod.EXACT:
+            raise ValueError("Exact match is not supported for short answers")
