@@ -73,7 +73,6 @@ logs
 *.log
 
 # Claude Code
-CLAUDE.md
 .claude/
 
 .task/checksum
