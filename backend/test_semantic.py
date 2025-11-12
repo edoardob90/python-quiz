@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Quick test of semantic matching functionality."""
 
-import sys
-sys.path.insert(0, "/home/user/python-quiz/backend")
+# import sys
+# sys.path.insert(0, "/home/user/python-quiz/backend")
 
-from validation import validate_answer, ValidationMethod
 from models import QuestionType
+from validation import ValidationMethod, validate_answer
+
 
 def test_semantic_matching():
     """Test various semantic matching scenarios."""
@@ -21,9 +22,9 @@ def test_semantic_matching():
         correct_answers=["list"],
         question_type=QuestionType.SHORT,
         validation_method=ValidationMethod.SEMANTIC,
-        semantic_threshold=0.70
+        semantic_threshold=0.70,
     )
-    print(f"   Answer: 'array' vs Correct: 'list'")
+    print("   Answer: 'array' vs Correct: 'list'")
     print(f"   ✓ Correct: {result.is_correct}")
     print(f"   Method: {result.method_used}")
     print(f"   Confidence: {result.confidence:.3f}")
@@ -35,10 +36,10 @@ def test_semantic_matching():
         correct_answers=["A mutable ordered collection of items"],
         question_type=QuestionType.SHORT,
         validation_method=ValidationMethod.SEMANTIC,
-        semantic_threshold=0.70
+        semantic_threshold=0.70,
     )
-    print(f"   Answer: 'A changeable ordered collection'")
-    print(f"   Correct: 'A mutable ordered collection of items'")
+    print("   Answer: 'A changeable ordered collection'")
+    print("   Correct: 'A mutable ordered collection of items'")
     print(f"   ✓ Correct: {result.is_correct}")
     print(f"   Method: {result.method_used}")
     print(f"   Confidence: {result.confidence:.3f}")
@@ -50,10 +51,10 @@ def test_semantic_matching():
         correct_answers=["A mutable ordered collection"],
         question_type=QuestionType.SHORT,
         validation_method=ValidationMethod.SEMANTIC,
-        semantic_threshold=0.70
+        semantic_threshold=0.70,
     )
-    print(f"   Answer: 'An immutable collection'")
-    print(f"   Correct: 'A mutable ordered collection'")
+    print("   Answer: 'An immutable collection'")
+    print("   Correct: 'A mutable ordered collection'")
     print(f"   ✓ Correct: {result.is_correct}")
     print(f"   Method: {result.method_used}")
     print(f"   Confidence: {result.confidence:.3f}")
@@ -65,9 +66,9 @@ def test_semantic_matching():
         correct_answers=["finally"],
         question_type=QuestionType.SHORT,
         validation_method=ValidationMethod.HYBRID,
-        semantic_threshold=0.70
+        semantic_threshold=0.70,
     )
-    print(f"   Answer: 'finaly' vs Correct: 'finally'")
+    print("   Answer: 'finaly' vs Correct: 'finally'")
     print(f"   ✓ Correct: {result.is_correct}")
     print(f"   Method: {result.method_used}")
     print(f"   Confidence: {result.confidence:.3f}")
@@ -79,10 +80,10 @@ def test_semantic_matching():
         correct_answers=["child classes acquire attributes from parent classes"],
         question_type=QuestionType.SHORT,
         validation_method=ValidationMethod.HYBRID,
-        semantic_threshold=0.70
+        semantic_threshold=0.70,
     )
-    print(f"   Answer: 'classes can inherit from other classes'")
-    print(f"   Correct: 'child classes acquire attributes from parent classes'")
+    print("   Answer: 'classes can inherit from other classes'")
+    print("   Correct: 'child classes acquire attributes from parent classes'")
     print(f"   ✓ Correct: {result.is_correct}")
     print(f"   Method: {result.method_used}")
     print(f"   Confidence: {result.confidence:.3f}")
@@ -90,6 +91,7 @@ def test_semantic_matching():
     print("\n" + "=" * 60)
     print("TEST COMPLETE - Semantic matching is working!")
     print("=" * 60)
+
 
 if __name__ == "__main__":
     test_semantic_matching()
