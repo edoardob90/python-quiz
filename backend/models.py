@@ -194,6 +194,10 @@ class Answer(BaseModel):
     points_earned: int
     response_time: int  # Milliseconds
     submitted_at: datetime
+    # Validation metadata (for dataset collection)
+    validation_method: str | None = None
+    validation_confidence: float | None = None
+    matched_answer: str | None = None
 
 
 class QuestionData(BaseModel):
@@ -206,6 +210,8 @@ class QuestionData(BaseModel):
     time_limit: int  # Seconds
     points: int
     image_url: str | None = None
+    validation_method: str | None = None  # "fuzzy", "semantic", or "hybrid"
+    semantic_threshold: float | None = None  # 0-1 for semantic matching
 
 
 # Request Models (for API endpoints)
@@ -244,3 +250,5 @@ class SubmitAnswerRequest(BaseModel):
     correct_answer: list[str]
     question_type: QuestionType
     max_points: int
+    validation_method: str | None = None  # "fuzzy", "semantic", or "hybrid"
+    semantic_threshold: float | None = None  # 0-1 for semantic matching

@@ -303,6 +303,8 @@ async def submit_answer(room_id: str, request: SubmitAnswerRequest):
         room_id: The room ID
         request: Request body containing all answer submission data
     """
+    from validation import ValidationMethod
+
     participant_id = request.participant_id
     answer = request.answer
     response_time = request.response_time
@@ -319,8 +321,24 @@ async def submit_answer(room_id: str, request: SubmitAnswerRequest):
 
     participant = participants[participant_id]
 
-    # Validate answer
-    is_correct = validate_answer(answer, correct_answer, question_type)
+    # Parse validation method (default to HYBRID)
+    validation_method = ValidationMethod.HYBRID
+    if request.validation_method:
+        try:
+            validation_method = ValidationMethod(request.validation_method)
+        except ValueError:
+            logger.warning(f"Invalid validation method: {request.validation_method}, using HYBRID")
+
+    # Validate answer with new validation system
+    validation_result = validate_answer(
+        user_answer=answer,
+        correct_answers=correct_answer,
+        question_type=question_type,
+        validation_method=validation_method,
+        semantic_threshold=request.semantic_threshold or 0.75,
+    )
+
+    is_correct = validation_result.is_correct
 
     # Calculate score using the scoring algorithm
     points = 0
@@ -336,7 +354,7 @@ async def submit_answer(room_id: str, request: SubmitAnswerRequest):
     else:
         participant.current_streak = 0
 
-    # Store answer
+    # Store answer with validation metadata
     answer_obj = Answer(
         participant_id=participant_id,
         question_index=question_index,
@@ -345,17 +363,30 @@ async def submit_answer(room_id: str, request: SubmitAnswerRequest):
         points_earned=points,
         response_time=response_time,
         submitted_at=datetime.now(),
+        validation_method=validation_result.method_used,
+        validation_confidence=validation_result.confidence,
+        matched_answer=validation_result.matched_answer,
     )
 
     if room_id not in answers:
         answers[room_id] = []
     answers[room_id].append(answer_obj)
 
+    # Log validation details for dataset collection
+    logger.info(
+        f"Answer validation: user='{answer}', correct={correct_answer}, "
+        f"method={validation_result.method_used}, "
+        f"confidence={validation_result.confidence:.3f}, "
+        f"is_correct={is_correct}"
+    )
+
     return {
         "is_correct": is_correct,
         "points_earned": points,
         "current_score": participant.score,
         "streak": participant.current_streak,
+        "validation_method": validation_result.method_used,
+        "validation_confidence": validation_result.confidence,
     }
 
 
@@ -396,6 +427,52 @@ async def get_leaderboard(room_id: str) -> LeaderboardResponse:
     cached_leaderboards[room_id] = leaderboard
 
     return leaderboard.to_response()
+
+
+@app.get("/api/answers/{room_id}/export")
+async def export_answers(room_id: str):
+    """
+    Export all answers for a room (for dataset collection).
+
+    This endpoint allows you to download all submitted answers with validation
+    metadata to build a training/validation dataset.
+
+    Args:
+        room_id: The unique identifier for the quiz room
+
+    Returns:
+        dict: All answers with validation details
+
+    Raises:
+        HTTPException: 404 if the room is not found
+    """
+    if room_id not in rooms:
+        raise HTTPException(status_code=404, detail="Room not found")
+
+    if room_id not in answers:
+        return {"room_id": room_id, "answers": []}
+
+    # Convert answers to JSON-serializable format
+    answer_data = []
+    for answer in answers[room_id]:
+        answer_data.append({
+            "participant_id": answer.participant_id,
+            "question_index": answer.question_index,
+            "answer": answer.answer,
+            "is_correct": answer.is_correct,
+            "points_earned": answer.points_earned,
+            "response_time": answer.response_time,
+            "submitted_at": answer.submitted_at.isoformat(),
+            "validation_method": answer.validation_method,
+            "validation_confidence": answer.validation_confidence,
+            "matched_answer": answer.matched_answer,
+        })
+
+    return {
+        "room_id": room_id,
+        "total_answers": len(answer_data),
+        "answers": answer_data,
+    }
 
 
 # === WebSocket Endpoints ===
