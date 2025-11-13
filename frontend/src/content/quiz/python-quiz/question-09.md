@@ -1,7 +1,7 @@
 ---
-quizName: "More Python Quiz"
+quizName: "Python Quiz"
 type: "multiple-choice"
-timeLimit: 30
+timeLimit: 25
 points: 1250
 correctAnswer: ["30, 20, 10"]
 options: ["30, 20, 10", "30, 30, 30", "10, 10, 10", "30, 10, 10"]
@@ -21,5 +21,6 @@ def outer():
     print(x)
 
 outer()
+
 print(x)
 ```

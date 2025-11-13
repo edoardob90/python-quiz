@@ -2,7 +2,7 @@
 quizName: "Python Quiz"
 type: "multiple-choice"
 timeLimit: 10
-points: 500
+points: 250
 correctAnswer: ["Tuple"]
 options: ["List", "Dictionary", "Set", "Tuple"]
 ---
