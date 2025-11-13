@@ -22,6 +22,15 @@ class QuestionType(Enum):
     SHORT = "short-answer"
 
 
+class ValidationMethod(Enum):
+    """Validation methods for answer checking."""
+
+    EXACT = "exact"  # Exact string match (multiple-choice)
+    FUZZY = "fuzzy"  # String similarity (rapidfuzz)
+    SEMANTIC = "semantic"  # Meaning similarity (embeddings)
+    HYBRID = "hybrid"  # Try fuzzy first, then semantic
+
+
 class Room(BaseModel):
     """Quiz room/session model."""
 
@@ -194,6 +203,12 @@ class Answer(BaseModel):
     points_earned: int
     response_time: int  # Milliseconds
     submitted_at: datetime
+    # Validation metadata (for dataset collection)
+    validation_method: ValidationMethod | None = None
+    validation_confidence: float | None = Field(
+        default=None, ge=0.0, le=1.0, description="Confidence score between 0 and 1"
+    )
+    matched_answer: str | None = None
 
 
 class QuestionData(BaseModel):
@@ -206,6 +221,19 @@ class QuestionData(BaseModel):
     time_limit: int  # Seconds
     points: int
     image_url: str | None = None
+    validation_method: str | None = None  # "fuzzy", "semantic", or "hybrid"
+    semantic_threshold: float | None = None  # 0-1 for semantic matching
+
+
+class ValidationResult(BaseModel):
+    """Result of answer validation with metadata."""
+
+    is_correct: bool
+    method_used: ValidationMethod
+    confidence: float = Field(
+        ge=0.0, le=1.0, description="Confidence score between 0 and 1"
+    )
+    matched_answer: str | None = None
 
 
 # Request Models (for API endpoints)
@@ -244,3 +272,5 @@ class SubmitAnswerRequest(BaseModel):
     correct_answer: list[str]
     question_type: QuestionType
     max_points: int
+    validation_method: str | None = None  # "fuzzy", "semantic", or "hybrid"
+    semantic_threshold: float | None = None  # 0-1 for semantic matching

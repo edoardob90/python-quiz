@@ -19,6 +19,8 @@ interface Question {
   time_limit: number;
   points: number;
   correct_answer: string[];
+  validation_method?: string;
+  semantic_threshold?: number;
 }
 
 interface AnswerResult {
@@ -270,6 +272,8 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
               correct_answer: this.currentQuestionData.correct_answer,
               question_type: this.currentQuestionData.type,
               max_points: this.currentQuestionData.points,
+              validation_method: this.currentQuestionData.validation_method,
+              semantic_threshold: this.currentQuestionData.semantic_threshold,
             }),
           },
         );
@@ -281,7 +285,7 @@ export function quizPlayer({ roomId = "", questions = [] as Question[] } = {}) {
         if (!isTimeout) {
           this.hasAnswered = true;
         }
-        console.log("Answer submitted successfully");
+        console.log("Answer submitted successfully", data);
       } catch (error) {
         console.error("Error submitting answer:", error);
         alert("Failed to submit answer. Check console for details.");

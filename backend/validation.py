@@ -1,49 +1,201 @@
-"""Answer validation with fuzzy matching for short-answer questions."""
+"""Answer validation with fuzzy matching and semantic similarity for short-answer questions."""
 
+import logging
+
+from numpy import argmax
 from rapidfuzz import fuzz
 
-from models import QuestionType
+from models import QuestionType, ValidationMethod, ValidationResult
+
+logger = logging.getLogger(__name__)
+
+
+def _exact_match(user_answer: str, correct_answers: list[str]) -> ValidationResult:
+    """
+    Check answer using exact string matching (case-insensitive, whitespace-trimmed).
+
+    This is used for:
+    - All multiple-choice questions (default behavior)
+    - Short-answer questions with validationMethod: "exact"
+
+    Args:
+        user_answer: User's submitted answer
+        correct_answers: List of acceptable answers
+
+    Returns:
+        ValidationResult with exact match details
+    """
+    normalized_user = user_answer.strip().lower()
+
+    for correct in correct_answers:
+        if normalized_user == correct.strip().lower():
+            return ValidationResult(
+                is_correct=True,
+                method_used=ValidationMethod.EXACT,
+                confidence=1.0,
+                matched_answer=correct,
+            )
+
+    return ValidationResult(
+        is_correct=False,
+        method_used=ValidationMethod.EXACT,
+        confidence=0.0,
+        matched_answer=None,
+    )
+
+
+def _fuzzy_match(
+    user_answer: str, correct_answers: list[str], threshold: float
+) -> ValidationResult:
+    """
+    Check answer using fuzzy string matching.
+
+    Args:
+        user_answer: User's submitted answer
+        correct_answers: List of acceptable answers
+        threshold: Minimum similarity score (0-100)
+
+    Returns:
+        ValidationResult with match details
+    """
+    best_score = 0.0
+    best_match = None
+
+    for correct in correct_answers:
+        similarity = fuzz.ratio(
+            user_answer, correct, processor=lambda s: s.strip().lower()
+        )
+        if similarity > best_score:
+            best_score = similarity
+            best_match = correct
+
+    is_correct = best_score >= threshold
+    return ValidationResult(
+        is_correct=is_correct,
+        method_used=ValidationMethod.FUZZY,
+        confidence=best_score / 100.0,  # Normalize to 0-1
+        matched_answer=best_match if is_correct else None,
+    )
+
+
+def _semantic_match(
+    user_answer: str, correct_answers: list[str], threshold: float
+) -> ValidationResult:
+    """
+    Check answer using semantic similarity (embeddings).
+
+    Args:
+        user_answer: User's submitted answer
+        correct_answers: List of acceptable answers
+        threshold: Minimum similarity score (0-1)
+
+    Returns:
+        ValidationResult with match details
+    """
+    try:
+        from embeddings import get_embedding_service
+
+        if (service := get_embedding_service()) is None:
+            logger.warning("Semantic validation not available, falling back to fuzzy")
+            return _fuzzy_match(user_answer, correct_answers, threshold)
+
+        # Compute similarity with each correct answer
+        similarities = service.batch_similarity(user_answer, correct_answers)
+
+        # Find best match
+        best_idx = argmax(similarities)
+        best_score = similarities[best_idx]
+        best_match = correct_answers[best_idx]
+
+        is_correct = best_score >= threshold
+
+        logger.debug(
+            f"Semantic match: '{user_answer}' vs '{best_match}' = {best_score:.3f}"
+        )
+
+        return ValidationResult(
+            is_correct=is_correct,
+            method_used=ValidationMethod.SEMANTIC,
+            confidence=best_score,
+            matched_answer=best_match if is_correct else None,
+        )
+
+    except Exception as e:
+        logger.error(f"Semantic matching failed: {e}")
+        # Fallback to fuzzy if embeddings fail
+        logger.warning("Falling back to fuzzy matching")
+        return _fuzzy_match(user_answer, correct_answers, threshold * 100)
 
 
 def validate_answer(
     user_answer: str,
     correct_answers: list[str],
     question_type: QuestionType,
-    ratio_threshold: float = 80.0,
-) -> bool:
+    validation_method: ValidationMethod = ValidationMethod.HYBRID,
+    fuzzy_threshold: float = 80.0,
+    semantic_threshold: float = 0.75,
+) -> ValidationResult:
     """
     Validate user answer against correct answer(s).
 
     For multiple choice: exact match required
-    For short answer: fuzzy matching (handles typos)
+    For short answer: configurable validation (fuzzy, semantic, or hybrid)
 
     Args:
         user_answer: The answer provided by the user
         correct_answers: List of acceptable correct answers
         question_type: "multiple-choice" or "short-answer"
+        validation_method: Method to use for validation
+        fuzzy_threshold: Minimum similarity for fuzzy matching (0-100)
+        semantic_threshold: Minimum similarity for semantic matching (0-1)
 
     Returns:
-        True if answer is correct, False otherwise
+        ValidationResult with is_correct flag and metadata
 
     Examples:
-        >>> validate_answer("Paris", ["Paris", "paris"], "short-answer")
+        >>> result = validate_answer("Paris", ["Paris"], "short-answer")
+        >>> result.is_correct
         True
 
-        >>> validate_answer("Pari", ["Paris"], "short-answer")
-        True  # 80% similarity due to fuzzy matching
+        >>> result = validate_answer("Pari", ["Paris"], "short-answer")
+        >>> result.is_correct  # Fuzzy match
+        True
 
-        >>> validate_answer("Option A", ["Option A"], "multiple-choice")
+        >>> result = validate_answer("list", ["array"], "short-answer", validation_method=ValidationMethod.SEMANTIC)
+        >>> result.is_correct  # Semantic match (synonyms)
         True
     """
-    match question_type:
-        case QuestionType.SHORT:
-            for correct in correct_answers:
-                similarity = fuzz.ratio(
-                    user_answer, correct, processor=lambda s: s.strip().lower()
-                )
-                if similarity >= ratio_threshold:
-                    return True
-            return False
+    # Multiple choice always uses exact match
+    if question_type == QuestionType.MULTI:
+        return _exact_match(user_answer, correct_answers)
 
-        case QuestionType.MULTI:
-            return user_answer in correct_answers
+    # Short answer: use specified validation method
+    match validation_method:
+        case ValidationMethod.FUZZY:
+            return _fuzzy_match(user_answer, correct_answers, fuzzy_threshold)
+
+        case ValidationMethod.SEMANTIC:
+            return _semantic_match(user_answer, correct_answers, semantic_threshold)
+
+        case ValidationMethod.HYBRID:
+            # Try fuzzy first (faster)
+            fuzzy_result = _fuzzy_match(user_answer, correct_answers, fuzzy_threshold)
+            if fuzzy_result.is_correct:
+                return fuzzy_result
+
+            # If fuzzy fails, try semantic
+            semantic_result = _semantic_match(
+                user_answer, correct_answers, semantic_threshold
+            )
+            if semantic_result.is_correct:
+                return semantic_result
+
+            # Return whichever had higher confidence
+            return (
+                fuzzy_result
+                if fuzzy_result.confidence > semantic_result.confidence
+                else semantic_result
+            )
+
+        case ValidationMethod.EXACT:
+            return _exact_match(user_answer, correct_answers)
