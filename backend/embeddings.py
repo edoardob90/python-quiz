@@ -1,6 +1,7 @@
 """Embedding service for semantic similarity matching."""
 
 import logging
+import os
 from functools import lru_cache
 
 import numpy as np
@@ -39,7 +40,6 @@ class EmbeddingService:
         if self._model is None:
             logger.info(f"Loading embedding model: {self.model_name}...")
             self._model = SentenceTransformer(self.model_name)
-            logger.info("Embedding model loaded successfully")
         return self._model
 
     def encode(self, text: str) -> np.ndarray:
@@ -57,7 +57,9 @@ class EmbeddingService:
         embedding = self.model.encode(normalized, convert_to_numpy=True)
         return embedding
 
-    def cosine_similarity(self, embedding1: np.ndarray, embedding2: np.ndarray) -> float:
+    def cosine_similarity(
+        self, embedding1: np.ndarray, embedding2: np.ndarray
+    ) -> float:
         """
         Compute cosine similarity between two embeddings.
 
@@ -107,28 +109,26 @@ class EmbeddingService:
             List of similarity scores (one per candidate)
         """
         text_emb = self.encode(text)
-        similarities = []
-
-        for candidate in candidates:
-            candidate_emb = self.encode(candidate)
-            sim = self.cosine_similarity(text_emb, candidate_emb)
-            similarities.append(sim)
-
-        return similarities
+        return [
+            self.cosine_similarity(text_emb, self.encode(candidate))
+            for candidate in candidates
+        ]
 
 
 @lru_cache(maxsize=1)
-def get_embedding_service() -> EmbeddingService:
+def get_embedding_service() -> EmbeddingService | None:
     """
     Get or create the global embedding service instance.
 
     Uses LRU cache to ensure singleton pattern (only one instance).
 
     Returns:
-        EmbeddingService: The global embedding service
+        EmbeddingService: The global embedding service or None if not required
     """
+    mode = os.getenv("VALIDATION_METHOD", "hybrid")
+    if mode not in ["hybrid", "semantic"]:
+        logger.info(f"Semantic validation disabled (VALIDATION_MODE={mode})")
+        return None
+
+    logger.info("Initializing embedding service singleton")
     return EmbeddingService()
-
-
-# Global instance for easy import
-embedding_service = get_embedding_service()

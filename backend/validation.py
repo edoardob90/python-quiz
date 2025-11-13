@@ -10,6 +10,40 @@ from models import QuestionType, ValidationMethod, ValidationResult
 logger = logging.getLogger(__name__)
 
 
+def _exact_match(user_answer: str, correct_answers: list[str]) -> ValidationResult:
+    """
+    Check answer using exact string matching (case-insensitive, whitespace-trimmed).
+
+    This is used for:
+    - All multiple-choice questions (default behavior)
+    - Short-answer questions with validationMethod: "exact"
+
+    Args:
+        user_answer: User's submitted answer
+        correct_answers: List of acceptable answers
+
+    Returns:
+        ValidationResult with exact match details
+    """
+    normalized_user = user_answer.strip().lower()
+
+    for correct in correct_answers:
+        if normalized_user == correct.strip().lower():
+            return ValidationResult(
+                is_correct=True,
+                method_used=ValidationMethod.EXACT,
+                confidence=1.0,
+                matched_answer=correct,
+            )
+
+    return ValidationResult(
+        is_correct=False,
+        method_used=ValidationMethod.EXACT,
+        confidence=0.0,
+        matched_answer=None,
+    )
+
+
 def _fuzzy_match(
     user_answer: str, correct_answers: list[str], threshold: float
 ) -> ValidationResult:
@@ -59,10 +93,14 @@ def _semantic_match(
         ValidationResult with match details
     """
     try:
-        from embeddings import embedding_service
+        from embeddings import get_embedding_service
+
+        if (service := get_embedding_service()) is None:
+            logger.warning("Semantic validation not available, falling back to fuzzy")
+            return _fuzzy_match(user_answer, correct_answers, threshold)
 
         # Compute similarity with each correct answer
-        similarities = embedding_service.batch_similarity(user_answer, correct_answers)
+        similarities = service.batch_similarity(user_answer, correct_answers)
 
         # Find best match
         best_idx = argmax(similarities)
@@ -129,13 +167,7 @@ def validate_answer(
     """
     # Multiple choice always uses exact match
     if question_type == QuestionType.MULTI:
-        is_correct = user_answer in correct_answers
-        return ValidationResult(
-            is_correct=is_correct,
-            method_used=ValidationMethod.EXACT,
-            confidence=1.0 if is_correct else 0.0,
-            matched_answer=user_answer if is_correct else None,
-        )
+        return _exact_match(user_answer, correct_answers)
 
     # Short answer: use specified validation method
     match validation_method:
@@ -166,4 +198,4 @@ def validate_answer(
             )
 
         case ValidationMethod.EXACT:
-            raise ValueError("Exact match is not supported for short answers")
+            return _exact_match(user_answer, correct_answers)

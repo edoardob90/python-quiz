@@ -49,9 +49,19 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Run on application startup."""
-    print("🚀 Quiz Backend starting up!")
-    print("📚 API Docs available at: http://localhost:8000/docs")
-    print("🐍 Python-powered real-time quiz platform ready!")
+    logger.info("🚀 Quiz Backend starting up!")
+
+    if os.getenv("PRELOAD_EMBEDDINGS", "").lower() == "true":
+        logger.info("🧠 Pre-loading embedding model...")
+        from embeddings import get_embedding_service
+
+        if (service := get_embedding_service()) is not None:
+            _ = service.model
+            logger.info("✅ Embedding model ready")
+        else:
+            logger.info("ℹ️  Semantic validation disabled, skipping model load")
+
+    logger.info("🐍 Quiz platform ready!")
     yield
 
 
@@ -327,7 +337,9 @@ async def submit_answer(room_id: str, request: SubmitAnswerRequest):
         try:
             validation_method = ValidationMethod(request.validation_method)
         except ValueError:
-            logger.warning(f"Invalid validation method: {request.validation_method}, using HYBRID")
+            logger.warning(
+                f"Invalid validation method: {request.validation_method}, using HYBRID"
+            )
 
     # Validate answer with new validation system
     validation_result = validate_answer(
@@ -455,18 +467,20 @@ async def export_answers(room_id: str):
     # Convert answers to JSON-serializable format
     answer_data = []
     for answer in answers[room_id]:
-        answer_data.append({
-            "participant_id": answer.participant_id,
-            "question_index": answer.question_index,
-            "answer": answer.answer,
-            "is_correct": answer.is_correct,
-            "points_earned": answer.points_earned,
-            "response_time": answer.response_time,
-            "submitted_at": answer.submitted_at.isoformat(),
-            "validation_method": answer.validation_method,
-            "validation_confidence": answer.validation_confidence,
-            "matched_answer": answer.matched_answer,
-        })
+        answer_data.append(
+            {
+                "participant_id": answer.participant_id,
+                "question_index": answer.question_index,
+                "answer": answer.answer,
+                "is_correct": answer.is_correct,
+                "points_earned": answer.points_earned,
+                "response_time": answer.response_time,
+                "submitted_at": answer.submitted_at.isoformat(),
+                "validation_method": answer.validation_method,
+                "validation_confidence": answer.validation_confidence,
+                "matched_answer": answer.matched_answer,
+            }
+        )
 
     return {
         "room_id": room_id,
@@ -495,9 +509,9 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
     try:
         # Keep connection alive, listen for messages
         while True:
-            data = await websocket.receive_json()
             # Handle any client messages if needed
             # For now, we mainly use WebSocket for server -> client broadcasts
+            await websocket.receive_json()
 
     except WebSocketDisconnect:
         # Connection closed
