@@ -38,11 +38,11 @@ from storage import (
 )
 from validation import validate_answer
 
-# Setup logger
-logger = logging.getLogger(__name__)
-
 # Read .env file
 _ = load_dotenv()
+
+# Logging is configured via log_config.json (passed to uvicorn with --log-config flag)
+logger = logging.getLogger(__name__)
 
 
 # Lifespan event replacing @app.on_event()
