@@ -53,13 +53,17 @@ const quizName = Astro.url.searchParams.get("quizName");
 
                 <CopyButton roomId={roomId} />
 
-                <p class="text-blue-600 text-sm mt-3">
-                    Or visit <strong
-                        ><a href={`${Astro.url.origin}/join?code=${roomId}`}
-                            >this link</a
-                        ></strong
+                <div class="mt-4 pt-4 border-t border-blue-200">
+                    <p class="text-blue-700 text-sm font-semibold mb-2">
+                        Or type this link:
+                    </p>
+                    <a
+                        href={`${Astro.url.origin}/join?code=${roomId}`}
+                        class="text-blue-600 hover:text-blue-800 font-mono text-lg font-semibold break-all underline decoration-2"
                     >
-                </p>
+                        {`${Astro.url.origin}/join?code=${roomId}`}
+                    </a>
+                </div>
             </div>
 
             <p class="text-gray-500 text-sm mt-8">
