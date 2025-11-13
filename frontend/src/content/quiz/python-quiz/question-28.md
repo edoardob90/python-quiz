@@ -1,7 +1,7 @@
 ---
 quizName: "Python Quiz"
 type: "multiple-choice"
-timeLimit: 10
+timeLimit: 15
 points: 500
 correctAnswer: ["Initialize instance attributes when an object is created"]
 options: [

@@ -1,7 +1,7 @@
 ---
 quizName: "Python Quiz"
 type: "multiple-choice"
-timeLimit: 15
+timeLimit: 10
 points: 750
 correctAnswer: ["default"]
 options: [

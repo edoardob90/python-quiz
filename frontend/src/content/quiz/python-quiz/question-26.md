@@ -1,26 +1,22 @@
 ---
 quizName: "Python Quiz"
 type: "multiple-choice"
-timeLimit: 20
-points: 1000
-correctAnswer: ["pathlib provides object-oriented interface, os.path uses string operations"]
+timeLimit: 15
+points: 500
+correctAnswer: ["report.pdf"]
 options: [
-  "pathlib provides object-oriented interface, os.path uses string operations",
-  "os.path is faster than pathlib",
-  "pathlib only works on Unix, os.path works everywhere",
-  "They are identical, just different names"
+  "report.pdf",
+  "/home/user/documents/report.pdf",
+  "documents/report.pdf",
+  "report"
 ]
 ---
 
-What is the main difference between `pathlib.Path` and `os.path`?
+What is the output of this code?
 
 ```python
 from pathlib import Path
-import os.path
 
-# Path object approach
-p = Path("folder") / "file.txt"
-
-# os.path approach
-p = os.path.join("folder", "file.txt")
+file_path = Path('/home/user/documents/report.pdf')
+print(file_path.name)
 ```

@@ -1,7 +1,7 @@
 ---
 quizName: "Python Quiz"
 type: "multiple-choice"
-timeLimit: 30
+timeLimit: 25
 points: 1250
 correctAnswer: ["from .module_b import function_name"]
 options: [

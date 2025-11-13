@@ -1,7 +1,7 @@
 ---
 quizName: "Python Quiz"
 type: "multiple-choice"
-timeLimit: 15
+timeLimit: 20
 points: 500
 correctAnswer: ["Section 3.2.1 Issue #32"]
 options: [

@@ -2,7 +2,7 @@
 quizName: "Python Quiz"
 type: "multiple-choice"
 timeLimit: 15
-points: 750
+points: 250
 correctAnswer: ["0, 2, 4, 6, 8"]
 options: [
   "0, 2, 4, 6, 8",
