@@ -20,7 +20,9 @@ const quizCollection = defineCollection({
     correctAnswer: z.array(z.string()), // array for flexibility with short-answer
     options: z.array(z.string()).optional(), // only for multiple-choice
     quizName: z.string().optional(), // a human-readable name of a quiz
-    validationMethod: z.enum(["fuzzy", "semantic", "hybrid"]).optional(), // validation method for short-answer
+    validationMethod: z
+      .enum(["fuzzy", "semantic", "hybrid", "exact"])
+      .optional(), // validation method for short-answer
     semanticThreshold: z.number().min(0).max(1).optional(), // threshold for semantic matching (0-1)
   }),
 });
